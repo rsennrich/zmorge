@@ -96,6 +96,12 @@ $N_es_\$e$ =                $NSg_es$ |\
 $N_es_\$er$ =               $NSg_es$ |\
                 {}:{<UL>er} $NPl_0$
 
+$N_es_er$ =               $NSg_es$ |\
+                {}:{er}     $NPl_0$
+
+$N_s_\$e$ =                $NSg_s$ |\
+              {<>}:{<UL>e} $NPl_0$
+
 $N_es_e$ =                  $NSg_es$ |\
                 {}:{<FB>e}  $NPl_0$
 
@@ -164,6 +170,8 @@ $NFem_0_s$ =    {<+NN><Fem>}:{} $N_0_s$
 %  Ananas/Ananas        
 $NFem_0_x$ =    {<+NN><Fem>}:{} $N_0_x$
 
+%  Silvia/Silvias # not sure if this exists except for names (Name-Fem_s)
+$NFem_s_s$ =    {<+NN><Fem>}:{} $N_s_s$
 
 
 %
@@ -236,6 +244,12 @@ $NMasc_es_\$e$ =        {<+NN><Masc>}:{}  $N_es_\$e$
 
 %  Gott-(e)s/Götter
 $NMasc_es_\$er$ =       {<+NN><Masc>}:{}  $N_es_\$er$
+
+% Tenor-s/Tenöre
+$NMasc_s_\$e$  =   {<+NN><Masc>}:{<>}  $N_s_\$e$
+
+% Geist-(e)s/Geister
+$NMasc_es_er$ =         {<+NN><Masc>}:{<>}      $N_es_er$
 
 %  Fleck-(e)s/Flecken
 $NMasc_es_en$ =         {<+NN><Masc>}:{}  $N_es_en$
@@ -391,7 +405,7 @@ $NNeut_es_e$ =          {<+NN><Neut>}:{}  $N_es_e$
 $NNeut_es_\$e$ =        {<+NN><Neut>}:{}  $N_es_\$e$
 
 %  Schild-(e)s/Schilder
-$NNeut_es_er$ =         {<+NN><Neut>}:{}  $N_es_\$er$
+$NNeut_es_er$ =         {<+NN><Neut>}:{}  $N_es_er$
 
 %  Buch-(e)s/Bücher
 $NNeut_es_\$er$ =       {<+NN><Neut>}:{}  $N_es_\$er$
@@ -1164,6 +1178,7 @@ $FLEXION$ = <>:<Abk_ADJ>        $Abk_ADJ$ |\
             <>:<NFem_0_n>       $NFem_0_n$ |\
             <>:<NFem_0_s>       $NFem_0_s$ |\
             <>:<NFem_0_x>       $NFem_0_x$ |\
+            <>:<NFem_s_s>       $NFem_s_s$ |\
             <>:<NMasc-Adj>      $NMasc-Adj$ |\
             <>:<NMasc-ns>       $NMasc-ns$ |\
             <>:<NMasc-s/$sse>   $NMasc-s/\$sse$ |\
@@ -1180,7 +1195,9 @@ $FLEXION$ = <>:<Abk_ADJ>        $Abk_ADJ$ |\
             <>:<NMasc_en_en=in> $NMasc_en_en=in$ |\
             <>:<NMasc_en_en>    $NMasc_en_en$ |\
             <>:<NMasc_es_$e>    $NMasc_es_\$e$ |\
+            <>:<NMasc_s_$e>     $NMasc_s_\$e$ |\
             <>:<NMasc_es_$er>   $NMasc_es_\$er$ |\
+            <>:<NMasc_es_er>    $NMasc_es_er$ |\
             <>:<NMasc_es_e>     $NMasc_es_e$ |\
             <>:<NMasc_es_en>    $NMasc_es_en$ |\
             <>:<NMasc_n_n=$in>  $NMasc_n_n=\$in$ |\
@@ -1380,6 +1397,7 @@ $FLEXFILTER$ = .* (<Abk_ADJ>:<>        <Abk_ADJ>:<> |\
                    <NFem_0_n>:<>       <NFem_0_n>:<> |\
                    <NFem_0_s>:<>       <NFem_0_s>:<> |\
                    <NFem_0_x>:<>       <NFem_0_x>:<> |\
+                   <NFem_s_s>:<>       <NFem_s_s>:<> |\
                    <NMasc-Adj>:<>      <NMasc-Adj>:<> |\
                    <NMasc-ns>:<>       <NMasc-ns>:<> |\
                    <NMasc-s/$sse>:<>   <NMasc-s/$sse>:<> |\
@@ -1396,7 +1414,9 @@ $FLEXFILTER$ = .* (<Abk_ADJ>:<>        <Abk_ADJ>:<> |\
                    <NMasc_en_en=in>:<> <NMasc_en_en=in>:<> |\
                    <NMasc_en_en>:<>    <NMasc_en_en>:<> |\
                    <NMasc_es_$e>:<>    <NMasc_es_$e>:<> |\
+                   <NMasc_s_$e>:<>     <NMasc_s_$e>:<> |\
                    <NMasc_es_$er>:<>   <NMasc_es_$er>:<> |\
+                   <NMasc_es_er>:<>    <NMasc_es_er>:<> |\ 
                    <NMasc_es_e>:<>     <NMasc_es_e>:<> |\
                    <NMasc_es_en>:<>    <NMasc_es_en>:<> |\
                    <NMasc_n_n=$in>:<>  <NMasc_n_n=$in>:<> |\

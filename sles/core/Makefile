@@ -21,8 +21,6 @@ all: Makefile $(TARGETS)
 clean:
 	rm -f *.a *.ca
 
-Makefile: *.fst
-	makedepend -Y -o.a *.fst 2>/dev/null
 
 # ==============================================================================
 # pattern rules:

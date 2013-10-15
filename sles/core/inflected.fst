@@ -21,7 +21,7 @@
 
 ALPHABET   = [#Letter# #lexchar# #infl-class# #orth#] <e>
 
-$Stem$     = [#Letter# #lexchar#] [#letter# #lexchar#]* 
+$Stem$     = [#Letter# #lexchar#]+
 
 % possible lexical words (inflectional stem + inflectional class):
 $LexWords$ = $Stem$ [#infl-class#]

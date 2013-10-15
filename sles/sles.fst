@@ -18,7 +18,7 @@
 
 ALPHABET = [#Letter#] [#infl-class#] [#lexchar#]
 
-$Stem$   = [#LETTER#][#letter#]+
+$Stem$   = [#LETTER#][#Letter#]+
 $stem$   = [#letter#]+
 $stem-v$ = (<ge>? [#letter#]+) | ([#letter#][#letter#]+<ge/zu>[#letter#]+)
 
@@ -40,36 +40,37 @@ $RegLexWords$  = \
   % comparative without umlaut, superlative with
   % a) -st (not if the stem already ends in an s-sound) ==> <Adj+>, <Adj-el/er>
   % b) -est (obligatory if the stem ends in an s-sound) ==> <Adj+e>, <Adj~+e>
-  % c) -st or -est                                      ==> <Adj+(e)>
-  $stem$[^sßxz]        [<Adj+><Adj+(e)>] | \
-  $stem$               [<Adj+e>] | \
+  % c) -st or -est                                      ==> <Adj+> and <Adj+e>
+  $stem$[^sßxz]        [<Adj+><Adj$>] | \
+  $stem$               [<Adj+e><Adj$e>] | \
   $stem$[ß]            [<Adj~+e>] | \
   $stem$e[lr]          [<Adj-el/er>] | \
   %
   % NOUNS
   % general naming convention: N{Gender}_{SgGen-suffix}_{PlNom-suffix}
   % (e)s/e
-  $Stem$[^e]           [<NMasc_es_e><NNeut_es_e><NMasc_es_$e>] | \
+  $Stem$[^e]           [<NMasc_s_$e><NMasc_s_e><NMasc_es_e><NNeut_s_e><NNeut_es_e><NMasc_es_$e>] | \
   $Stem$[sß]           [<NMasc-s/sse><NNeut-s/sse><NMasc-s/$sse>] | \
   % (e)s/((i)e)n
   $Stem$[^e]           [<NMasc_es_en><NNeut_es_en>] | \
-  $Stem$[^esßxz]       [<NMasc_s_en>] | \
+  $Stem$[^esßxz]       [<NMasc_s_en><NNeut_s_en>] | \
   $Stem$(e|el|er)      [<NMasc_s_n><NNeut_s_n>] | \
   $Stem$([#cons#]&[^s])[<NNeut-0/ien>] | \
   % (e)s/er
   $Stem$[^e]           [<NMasc_es_$er><NNeut_es_$er>] | \
-  $Stem$[sßxz]         [<NNeut_es_$er>] | \
+  $Stem$[^e]           [<NMasc_es_er><NNeut_es_er>] | \
   $Stem$[sß]           [<NNeut-s/$sser>] | \
   % s/s
-  $Stem$[^sßxz]        [<NMasc_s_s><NNeut_s_s>] | \
+  $Stem$[^sßxz]        [<NMasc_s_s><NNeut_s_s><NFem_s_s>] | \
   % s/-
   $Stem$[n]            [<NMasc_s_x><NNeut_s_x><NMasc_s_$x>] | \
-  $Stem$(e|el|er)      [<NMasc_s_0><NNeut_s_0><NMasc_s_$>] | \
+  $Stem$(e|el|er)      [<NMasc_s_0><NNeut_s_0><NMasc_s_$><NNeut_s_$>] | \
   % (e)n/(e)n
   $Stem$[^e]           [<NMasc_en_en>] | \
-  $Stem$[e]            [<NMasc_n_n>] | \
+  $Stem$[re]           [<NMasc_n_n>] | \
   % -/e
-  $Stem$[^e]           [<NFem_0_$e>] | \
+  $Stem$[^e]           [<NFem_0_$e><NFem_0_e>] | \
+  $Stem$(er|el)        [<NFem_0_$>] | \
   $Stem$[sß]           [<NFem-s/$sse>] | \
   $Stem$(nis)          [<NFem-s/sse>] | \
   % -/(e)n
@@ -78,11 +79,25 @@ $RegLexWords$  = \
   $Stem$[sß]           [<NFem-s/ssen>] | \
   $Stem$(in)           [<NFem-in>] | \
   % -/s
-  $Stem$[^sßxz]        [<NFem_0_s>]
+  $Stem$[^sßxz]        [<NFem_0_s>] | \
+  % -/-
+  $Stem$               [<NFem_0_x><NMasc_0_x><NNeut_0_x>] | \
+  % us/en; us/i
+  $Stem$ us            [<NMasc-us/en><NMasc-us/i>] | \
+  % um/a; um/en
+  $Stem$ um            [<NNeut-um/a><NNeut-um/en>] | \
+  % on/a;
+  $Stem$ on            [<NNeut-on/a>] | \
+  % a/ata; a/en
+  $Stem$ a             [<NNeut-a/ata><NNeut-a/en><NFem-a/en>] | \
+  % is/en; is/iden
+  $Stem$ is             [<NFem-is/en><NFem-is/iden>] | \
+  % ns
+  $Stem$ e             [<NMasc-ns>]
 
 % filter unwanted symbols that might have been introduced by the symbol class
 % complement operator:
-$RegLexWords$ =    ([#Letter#]|<ge>|<ge/zu>)* [#letter#] [#infl-class#] \
+$RegLexWords$ =    ([#Letter#]|<ge>|<ge/zu>)* [#Letter#] [#infl-class#] \
                 || $RegLexWords$
 
 % ensure that umlauting classes are applied to umlautable stems only:
@@ -94,9 +109,6 @@ $RegLexWords$  = \
         (.* [auoAUO] ([au]? [#cons#]* (e[#cons#])?)?  [#uml-class#]) )\
     || $RegLexWords$
 
-% there should be (at least) one vowel in a stem:
-$RegLexWords$ = .*[#Vowel#].* || $RegLexWords$
-
 % there should be (at least) one vowel before and after a <ge/zu> marker:
 $RegLexWords$ =    ((.*[#Vowel#].* <ge/zu> .*[#Vowel#].*) | [^<ge/zu>]* ) \
                 || $RegLexWords$
@@ -104,72 +116,8 @@ $RegLexWords$ =    ((.*[#Vowel#].* <ge/zu> .*[#Vowel#].*) | [^<ge/zu>]* ) \
 % there should be (at least) one vowel in a stem before a schwa-syllable:
 #schwa-class# = <Adj-el/er><VVReg-el/er>\
                 <NMasc_s_n><NNeut_s_n><NMasc_s_0><NNeut_s_0><NMasc_s_$>
-$RegLexWords$ =    .*[#Vowel#].*e[lr]?[#schwa-class#] | [^#schwa-class#]* \
+$LexWords$ =    .*[#Vowel#].*e[lr]?[#schwa-class#] | [^#schwa-class#]* \
                 || $RegLexWords$
-
-
-
-% ==============================================================================
-% Possible lexical words: sth + irregular inflectional stem
-% ==============================================================================
-
-% load lexicon:
-$Lexicon$ = "lexicon/slex"
-
-% extract lexical words that can function as a head:
-$IrregLexHeads$ = <>:<Head> .* || $Lexicon$ || <Head>:<> .*
-
-% irregular nouns:
-% decapitalise first letter on both levels (not very efficient, though; it
-% would be better to have only decapitalised letters in the lexicon; but I
-% leave it as it is...):
-$IrregNounHeads$ =    [#letter_#]:[#LETTER#] [#any#]* [#infl-nn#] \
-                   || $IrregLexHeads$ \
-                   || [#LETTER#]:[#letter_#] [#any#]* [#infl-nn#]
-$IrregNouns$     = [#LETTER#][#letter#]+ $IrregNounHeads$
-
-% irregular adjectives:
-% [PENDING]
-% Would that be useful given that the adjectival inflectional paradigm in
-% SMOR includes the comparative and superlative??? It seems to me that
-% compounds with an adjectival head are always restricted to the positive.
-
-% Complex Irregular Verbs
-% two general types:
-% 1) prefixed irregular verbs
-% 2) "particle verbs" (written in one word if in subordinate clauses)
-% convention: the left boundary of the simplex irregular verb is always
-% marked with an <x> to avoid spurious ambiguities such as "verbrannte"
-% analysed as a form of "brennen" vs a form of "rennen"
-% <ge/zu> may occur left of <x>
-
-% Prefix Verbs
-% prefixes are restricted to the following, cf. Duden-Grammatik (2005), §1049:
-$Prefix$ = (be|ent|er|ge|miß|ver|zer|durch|unter|über|um|unter|wider)
-$IrregVerbHeads-pref$ =    (<>:<ge>| [^<ge>]) <x>:<> [#letter#]* <VIrreg> \
-                        || $IrregLexHeads$ \
-                        || (<ge>:<>|[^<ge>]) [#any#]*
-$IrregVerbs-pref$     = $Prefix$ $IrregVerbHeads-pref$
-
-% Particle Verbs
-% If the base forms its past participle with "ge-" then "-ge-" is also
-% required for the particle verb:
-$IrregVerbHeads-part$ =    (<ge/zu>:<ge> | [^<ge>]) <x>:<> [#letter#]* <VIrreg>\
-                        || $IrregLexHeads$ \
-                        || (<ge>:<ge/zu>|[^<ge>]) [#any#]*
-$IrregVerbs-part$     = [#letter#][#letter#]+ $IrregVerbHeads-part$
-
-
-% all irregular lexical words:
-$IrregLexWords$ = $IrregNouns$ | $IrregVerbs-pref$ | $IrregVerbs-part$
-
-
-
-% ==============================================================================
-% Possible lexical words: regular lexical words + irregular lexical words
-% ==============================================================================
-
-$LexWords$ = $RegLexWords$ | $IrregLexWords$
 
 
 
@@ -203,16 +151,8 @@ $MorphSynWords$ = [^#infl-misc#]* || $MorphSynWords$
 
 ALPHABET = [#Letter#] [#infl-class#] [#lexchar#] [#infl-prop#] [#orth#]
 
-% OLD ORTHOGRAPHY (cf. README and helper.fst:$Orth-Filter$)
-% enforce old orthography:
-$MorphSynWords$ = [^<NEWORTH>]* || $MorphSynWords$
 % map the orthograhphy marker to zero:
 $MorphSynWords$ = ([^#orth#] | <>:[#orth#])* || $MorphSynWords$
-% Also ensure that no stem -- apart from verbal stems -- ends in "ss". This
-% is because all stems but verbal stems are also word forms and are represented
-% according to the old orthography in SMOR.
-$not-ss$        = (!(ss) & [#letter#][#letter#])
-$MorphSynWords$ = .* ($not-ss$[#infl-class#] | [#infl-v#]) .* || $MorphSynWords$
 
 % differentiate between <SS> in old and new orthography (cf. helper.fst):
 $MorphSynWords$ = $MorphSynWords$ || $Orth-Filter$

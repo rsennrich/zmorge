@@ -51,11 +51,11 @@
   <N?/Pl_0><N?/Pl_x>\
   <NFem-a/en><NFem-in><NFem-is/en><NFem-is/iden><NFem-s/$sse>\
   <NFem-s/sse><NFem-s/ssen><NFem/Pl><NFem/Sg><NFem_0_$><NFem_0_$e><NFem_0_e>\
-  <NFem_0_en><NFem_0_n><NFem_0_s><NFem_0_x>\
+  <NFem_0_en><NFem_0_n><NFem_0_s><NFem_0_x><NFem_s_s>\
   <NMasc-Adj><NMasc-ns><NMasc-s/$sse><NMasc-s/Sg><NMasc-s/sse><NMasc-s0/sse>\
   <NMasc-us/en><NMasc-us/i><NMasc/Pl><NMasc/Sg_0><NMasc/Sg_es><NMasc/Sg_s>\
   <NMasc_0_x><NMasc_en_en=in><NMasc_en_en><NMasc_es_$e><NMasc_es_$er>\
-  <NMasc_es_e><NMasc_es_en><NMasc_n_n=$in><NMasc_n_n=in><NMasc_n_n><NMasc_s_$>\
+  <NMasc_es_e><NMasc_es_en><NMasc_es_er><NMasc_n_n=$in><NMasc_n_n=in><NMasc_n_n><NMasc_s_$>\
   <NMasc_s_$x><NMasc_s_0=in><NMasc_s_0><NMasc_s_e=in><NMasc_s_e><NMasc_s_en=in>\
   <NMasc_s_en><NMasc_s_n><NMasc_s_s><NMasc_s_x>\
   <NNeut-0/ien><NNeut-Herz><NNeut-Inner><NNeut-a/ata><NNeut-a/en>\

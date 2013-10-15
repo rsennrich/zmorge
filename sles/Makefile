@@ -6,7 +6,7 @@ default: all
 
 TARGETS = sles.a
 
-SUBDIRS = core lexicon
+SUBDIRS = core
 
 sles.a: core/inflected.a
 
@@ -21,10 +21,6 @@ all: Makefile subdirs $(SUBDIRS) $(TARGETS)
 clean:
 	rm -f *.a *.ca
 	$(MAKE) -C core clean
-	$(MAKE) -C lexicon clean
-
-Makefile: *.fst
-	makedepend -Y -o.a *.fst 2>/dev/null
 
 subdirs: $(SUBDIRS)
 
@@ -39,3 +35,5 @@ $(SUBDIRS):
 	fst-compiler-utf8   $< $@
 	fst-compact    $(@) $(@:.a=.ca)
 	fst-compact -s $(@) $(@:.a=.s.ca)
+
+sles.a: core/alphabet.fst core/helper.fst
