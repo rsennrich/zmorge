@@ -24,7 +24,7 @@ $stem-v$ = (<ge>? [#letter#]+) | ([#letter#][#letter#]+<ge/zu>[#letter#]+)
 
 % general conventions of the SMOR inflectional classes:
 % $:      umlaut
-% ~:      if the stem ends in "s" or "ﬂ"
+% ~:      if the stem ends in "s" or "√ü"
 % -s/sse: stem ends in "s" which is doubled if followed by "e"
 $RegLexWords$  = \
   % VERBS
@@ -41,27 +41,27 @@ $RegLexWords$  = \
   % a) -st (not if the stem already ends in an s-sound) ==> <Adj+>, <Adj-el/er>
   % b) -est (obligatory if the stem ends in an s-sound) ==> <Adj+e>, <Adj~+e>
   % c) -st or -est                                      ==> <Adj+(e)>
-  $stem$[^sﬂxz]        [<Adj+><Adj+(e)>] | \
+  $stem$[^s√üxz]        [<Adj+><Adj+(e)>] | \
   $stem$               [<Adj+e>] | \
-  $stem$[ﬂ]            [<Adj~+e>] | \
+  $stem$[√ü]            [<Adj~+e>] | \
   $stem$e[lr]          [<Adj-el/er>] | \
   %
   % NOUNS
   % general naming convention: N{Gender}_{SgGen-suffix}_{PlNom-suffix}
   % (e)s/e
   $Stem$[^e]           [<NMasc_es_e><NNeut_es_e><NMasc_es_$e>] | \
-  $Stem$[sﬂ]           [<NMasc-s/sse><NNeut-s/sse><NMasc-s/$sse>] | \
+  $Stem$[s√ü]           [<NMasc-s/sse><NNeut-s/sse><NMasc-s/$sse>] | \
   % (e)s/((i)e)n
   $Stem$[^e]           [<NMasc_es_en><NNeut_es_en>] | \
-  $Stem$[^esﬂxz]       [<NMasc_s_en>] | \
+  $Stem$[^es√üxz]       [<NMasc_s_en>] | \
   $Stem$(e|el|er)      [<NMasc_s_n><NNeut_s_n>] | \
   $Stem$([#cons#]&[^s])[<NNeut-0/ien>] | \
   % (e)s/er
   $Stem$[^e]           [<NMasc_es_$er><NNeut_es_$er>] | \
-  $Stem$[sﬂxz]         [<NNeut_es_$er>] | \
-  $Stem$[sﬂ]           [<NNeut-s/$sser>] | \
+  $Stem$[s√üxz]         [<NNeut_es_$er>] | \
+  $Stem$[s√ü]           [<NNeut-s/$sser>] | \
   % s/s
-  $Stem$[^sﬂxz]        [<NMasc_s_s><NNeut_s_s>] | \
+  $Stem$[^s√üxz]        [<NMasc_s_s><NNeut_s_s>] | \
   % s/-
   $Stem$[n]            [<NMasc_s_x><NNeut_s_x><NMasc_s_$x>] | \
   $Stem$(e|el|er)      [<NMasc_s_0><NNeut_s_0><NMasc_s_$>] | \
@@ -70,15 +70,15 @@ $RegLexWords$  = \
   $Stem$[e]            [<NMasc_n_n>] | \
   % -/e
   $Stem$[^e]           [<NFem_0_$e>] | \
-  $Stem$[sﬂ]           [<NFem-s/$sse>] | \
+  $Stem$[s√ü]           [<NFem-s/$sse>] | \
   $Stem$(nis)          [<NFem-s/sse>] | \
   % -/(e)n
   $Stem$[^e]           [<NFem_0_en>] | \
   $Stem$(e|el|er)      [<NFem_0_n>] | \
-  $Stem$[sﬂ]           [<NFem-s/ssen>] | \
+  $Stem$[s√ü]           [<NFem-s/ssen>] | \
   $Stem$(in)           [<NFem-in>] | \
   % -/s
-  $Stem$[^sﬂxz]        [<NFem_0_s>]
+  $Stem$[^s√üxz]        [<NFem_0_s>]
 
 % filter unwanted symbols that might have been introduced by the symbol class
 % complement operator:
@@ -144,8 +144,8 @@ $IrregNouns$     = [#LETTER#][#letter#]+ $IrregNounHeads$
 % <ge/zu> may occur left of <x>
 
 % Prefix Verbs
-% prefixes are restricted to the following, cf. Duden-Grammatik (2005), ß1049:
-$Prefix$ = (be|ent|er|ge|miﬂ|ver|zer|durch|unter|¸ber|um|unter|wider)
+% prefixes are restricted to the following, cf. Duden-Grammatik (2005), ¬ß1049:
+$Prefix$ = (be|ent|er|ge|mi√ü|ver|zer|durch|unter|√ºber|um|unter|wider)
 $IrregVerbHeads-pref$ =    (<>:<ge>| [^<ge>]) <x>:<> [#letter#]* <VIrreg> \
                         || $IrregLexHeads$ \
                         || (<ge>:<>|[^<ge>]) [#any#]*

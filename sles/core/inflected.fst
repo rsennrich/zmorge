@@ -30,10 +30,10 @@ $LexWords$ = $Stem$ [#infl-class#]
 $LexWords$ = $LexWords$ || (.* e:<e> [lr] <VVReg-el/er> | [^<VVReg-el/er>]*)
 
 % for phon.fst
-% Replace "ss" at all verb stem ends with the special trigger "ß<SS>"
+% Replace "ss" at all verb stem ends with the special trigger "ÃŸ<SS>"
 % (see also: $Orth-Filter$ in helper.fst):
 $not-ss$     = !(ss) & [<e> #letter#][#letter#]
-$Replace-ss$ = (.* (($not-ss$ | s:ß s:<SS>) [#infl-v#])) | [^#infl-v#]*
+$Replace-ss$ = (.* (($not-ss$ | s:ÃŸ s:<SS>) [#infl-v#])) | [^#infl-v#]*
 $LexWords$   = $LexWords$ || $Replace-ss$
 
 

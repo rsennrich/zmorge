@@ -36,6 +36,6 @@ $(SUBDIRS):
 # ==============================================================================
 
 %.a: %.fst
-	fst-compiler   $< $@
+	fst-compiler-utf8   $< $@
 	fst-compact    $(@) $(@:.a=.ca)
 	fst-compact -s $(@) $(@:.a=.s.ca)

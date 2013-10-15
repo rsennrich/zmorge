@@ -13,15 +13,15 @@
 % Normal Graphemes
 % -------------------------------------------------------------------------
 
-#LETTER#       = A-Zƒ‹÷
-#letter#       = a-z‰¸ˆﬂÈ
-#letter_#      = a-z‰¸ˆ
+#LETTER#       = A-Z√Ñ√ú√ñ
+#letter#       = a-z√§√º√∂√ü√©
+#letter_#      = a-z√§√º√∂
 #Letter#       = #LETTER# #letter#
-#cons#         = bcdfghjklmnpqrstvwxyzﬂ
+#cons#         = bcdfghjklmnpqrstvwxyz√ü
 #CONS#         = BCDFGHJKLMNPQRSTVWXYZ
 #Cons#         = #cons# #CONS#
-#vowel#        = aeiouy‰ˆ¸È
-#VOWEL#        = AEIOUYƒ÷‹
+#vowel#        = aeiouy√§√∂√º√©
+#VOWEL#        = AEIOUY√Ñ√ñ√ú
 #Vowel#        = #vowel# #VOWEL#
 #number#       = 0-9
 #alphnum#      = #Letter# #number#
