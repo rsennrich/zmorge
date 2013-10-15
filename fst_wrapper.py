@@ -1,18 +1,7 @@
 import re
-import fileinput 
-from collections import defaultdict
-from datetime import datetime
 import pexpect
-import time
-import yaml
-import sys
-import wiktionary_config as config
+import config
 
-try:
-    from yaml import CLoader as Loader, CDumper as Dumper
-except ImportError:
-    print "could not load the faster cloader/cdumper for yaml package.\n will load standard loader/dumper"
-    from yaml import Loader, Dumper
 
 class FstWrapper():
     def __init__(self):
@@ -23,12 +12,15 @@ class FstWrapper():
         self.morAnalyseMode = config.morAnalyseMode 
         # regex for stem guessing NOTE: for now only used for adjectives
         self.regex_adj_stem = re.compile("^(.*?)<") # TODO: move to regex file
-        if config.debug_lvl > 0: print self.child.before
+        before = self.child.before
+        if config.debug_lvl > 0: print before
+        if self.child.terminated:
+            raise RuntimeError(before)
 
     def analyse(self, word):
         word = word.strip()
         if word == "":
-            return None
+            return []
         # if not in analyse mode, go to it
         if self.morAnalyseMode == False: 
             # print "Was not in analyse mode => toggle to it!"
@@ -40,13 +32,13 @@ class FstWrapper():
         self.child.expect(["analyze> ", pexpect.EOF])
         result = self.child.before.split("\r\n")[1:-1]
         if len(result) == 1 and re.match("^no result for ", result[0]):
-            result = None
+            result = []
         return result
 
     def generate(self, word):
         word = word.strip()
         if word == "":
-            return None
+            return []
         # if not in analyse mode, go to it
         if self.morAnalyseMode == True: 
             # print "Was not in generate mode => toggle to it!"
@@ -58,21 +50,13 @@ class FstWrapper():
         self.child.expect(["generate> ", pexpect.EOF])
         result = self.child.before.split("\r\n")[1:-1]
         if len(result) == 1 and re.match("^no result for ", result[0]):
-            result = None
+            result = []
         return result
 
     # if you just want to play around you can use this function
     def openShell(self):
-        if config.debug_lvl > 0: print "try to execute following command:\n'" + config.exec_string + "'"
-        self.child = pexpect.spawn(config.exec_string)
-        # self.child.logfile = sys.stdout  # TODO: ... log file could be neat
+
         while True:
-            if self.morAnalyseMode == True:
-                if config.debug_lvl > 0: print "### in analyse mode"
-                self.child.expect(["analyze> ", pexpect.EOF])
-            else:
-                if config.debug_lvl > 0: print "### in generate mode"
-                self.child.expect(["generate> ", pexpect.EOF])
             if config.debug_lvl > 0: print "################################\n", self.child.before, "############################\n"
             input_string = raw_input("input<<<<")
             if config.debug_lvl > 0: print "Sending an input to the prog:", input_string
@@ -80,6 +64,12 @@ class FstWrapper():
                 if config.debug_lvl > 0: print "input string was '\\nn' => toggle to Mode"
                 self.toggleMorMode()
             self.child.sendline(input_string)
+            if self.morAnalyseMode == True:
+                if config.debug_lvl > 0: print "### in analyse mode"
+                self.child.expect(["analyze> ", pexpect.EOF])
+            else:
+                if config.debug_lvl > 0: print "### in generate mode"
+                self.child.expect(["generate> ", pexpect.EOF])
 
     def toggleMorMode(self):
         self.morAnalyseMode = not self.morAnalyseMode
@@ -96,12 +86,15 @@ class FstWrapper():
         if analysis == None:
             return []
         for ana in analysis:
-            possibleAna = True
-            for filterRegex in filterRegexes:
-                match = filterRegex.match(ana)
-                if match == None:
-                    possibleAna = False
-                    break # breaks out of the inner loop (filterRegexes for loop)
+            if ana.split('<')[0] == wordstem or (ana.startswith('<ge>') and ana[4:].split('<')[0] == wordstem):
+                possibleAna = True
+                for filterRegex in filterRegexes:
+                    match = filterRegex.match(ana)
+                    if match == None:
+                        possibleAna = False
+                        break
+            else:
+                possibleAna = False
 
             # NOTE: following are hardcoded special rules
             if pos == 'ADJ':
