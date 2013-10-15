@@ -1,0 +1,35 @@
+Spelling of "s"/"ss"/"ﬂ"
+========================
+
+The old orthography requires that "ss" is written as "ﬂ" at the end of stems
+(or if the inflectional suffix starts with a consonant). That means that "ﬂ"
+is ambiguous in the old orthography. It is not clear whether the preceding
+vowel is short or long. If it is short than "ﬂ" has to be replaced with "ss"
+if followed by a vowel.
+
+Different spellings wrt "ss" vs "ﬂ" in the old and new orthography should
+be marked as "ﬂ<SS>", "ﬂ<SSalt>", or "ﬂ<SSneu>" on the lexical tape of
+phon.fst. These are realised as follows:
+
+i)   ﬂ<SS>    is spelled as "ss" in old and new orthography ("m¸ssen")
+ii)  ﬂ<SSalt> is spelled as "ﬂ"  in old orthography         ("muﬂt")
+iii) ﬂ<SSneu> is spelled as "ss" in new orthography         ("musst")
+
+Furthermore, some stems ending in a simple "s", e.g. "Bus", have a double "s"
+if the inflectional suffix starts with a vowel (i.e. with "e"). This should
+be marked with "s<SS>" before passing results to phon.fst.
+
+Instead of passing "<SS>", "<SSneu>", and "<SSalt>" all the time, only "<SS>"
+is used, and later differentiated into all three variants. This has the
+advantage that lexical entries with different word-internal spellings in the
+old and new orthography (e.g. "Missverst‰ndnis" vs "Miﬂverst‰ndnis") can be
+encoded using the same convention with just one representation
+("Miﬂ<SS>verst‰ndnis") instead of two.
+
+Since SMOR's inflectional classes already contain the information whether
+the stem's end is affected by these orthographic rules, lexical entries do
+not encode this information at the stem's end. For nouns and adjectives,
+"<SS>" is inserted by the inflectional rule itself. Verbal stems always end
+in "ss" in SMOR (probably because this resembles the citation form). "ss" is
+replaced with "ﬂ<SS>" in inflected.fst.
+
