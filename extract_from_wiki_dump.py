@@ -1188,6 +1188,7 @@ class Worker(multiprocessing.Process):
                 # if no inflection class is found, try to find a pair of classes (one singular class, one plural class) that predicts all word forms
                 elif not hypothesis:
                     singular_hypothesis = self.singular_mapping(set.intersection(*[word_infos['analysed_as'][case][-1] for case in word_infos['analysed_as'] if 'Singular' in case]))
+                    singular_hypothesis = self.disambiguate_es_s(word_infos, singular_hypothesis)
                     plural_hypothesis = self.plural_mapping.get(word_infos.get('gender'), [])
                     if len(singular_hypothesis) == 1 and len(plural_hypothesis) == 1:
                         hypothesis = singular_hypothesis
@@ -1216,16 +1217,7 @@ class Worker(multiprocessing.Process):
                     # only keep hypothesis which do not contain '$'. (no umlaut in plural)
                     hypothesis = filter(lambda x: not '$' in x, hypothesis)
 
-                # special case _es and _s Genitiv. only take _es if there is at least one casevalue which has the ending 'es'
-                if any(hypo in self.s_es_mapping and self.s_es_mapping[hypo] in hypothesis for hypo in hypothesis):
-                    es_genitive = has_es_genitive(word_infos)
-                    for hypo in list(hypothesis):
-                        if hypo in self.s_es_mapping and self.s_es_mapping[hypo] in hypothesis:
-                            if es_genitive:
-                                hypothesis.remove(hypo)
-                            else:
-                                hypothesis.remove(self.s_es_mapping[hypo])
-
+                hypothesis = self.disambiguate_es_s(word_infos, hypothesis)
 
                 # mapping of names
                 if (word_infos['info'] and len(re.findall('Nachname', word_infos['info'])) > 0) or word_sort == 'Nachname':
@@ -1361,6 +1353,17 @@ class Worker(multiprocessing.Process):
         if config.debug_lvl > 0: print("mapped classes are: ", mapped_hypothesis)
         return mapped_hypothesis
 
+    # special case _es and _s Genitiv. only take _es if there is at least one casevalue which has the ending 'es'
+    def disambiguate_es_s(self, info, hypothesis):
+        if any(hypo in self.s_es_mapping and self.s_es_mapping[hypo] in hypothesis for hypo in hypothesis):
+            es_genitive = has_es_genitive(info)
+            for hypo in list(hypothesis):
+                if hypo in self.s_es_mapping and self.s_es_mapping[hypo] in hypothesis:
+                    if es_genitive:
+                        hypothesis.remove(hypo)
+                    else:
+                        hypothesis.remove(self.s_es_mapping[hypo])
+        return hypothesis
 
 #singular-only adjectives and dealing with optional e in superlative
 def adjective_filter(word, hypotheses):
