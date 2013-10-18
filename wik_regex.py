@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # extract state activater/deactivtor
-activator =   "\s*\{\{(Deutsch (.*) (Übersicht|Deklination)|Verb\-Tabelle)"
+activator =   "\s*\{\{\s*(Deutsch (.*) (Übersicht|Deklination)|Verb\-Tabelle)"
 deactivator = "\s*\|?\}\}\s*" # TODO:evt sogar "\s*\}\}.*"
 
 # extracting regexes
@@ -27,3 +27,4 @@ case_filter = "{{.*?}}"
 
 # find alternatives in case values e.g. 'krabbl(e)'. also could be marked as 'krabbl / krabble'
 alt_parenthesis = ".*\(.+\).*"
+alt_brackets = ".*\[.+\].*"

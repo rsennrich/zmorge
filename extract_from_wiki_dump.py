@@ -433,6 +433,7 @@ def cleanCasesAndSplit(words):
     # ######### here we define cleanup regexes (in the values) for wordsorts
 
     regex_alt_parenthesis = re.compile(wik_regex.alt_parenthesis)
+    regex_alt_brackets = re.compile(wik_regex.alt_brackets)
 
     # <br>, </br>, <br />, <br/>
     regex_pagebreak = re.compile("\s*</?br\s*/?>\s*")
@@ -575,10 +576,16 @@ def cleanCasesAndSplit(words):
                     # - e.g. 'krabbl(e)'. 
                     # - sometimes also given like this: 'krabbl / krabble'
                     match = regex_alt_parenthesis.match(caseValue)
-                    if match != None:
+                    match2 = regex_alt_brackets.match(caseValue)
+                    if match:
                         caseValue_list = []
                         caseValue_list.append(re.sub('\(|\)', '', caseValue))  # just remove parenthesis
-                        caseValue_list.append(re.sub('\(.*\)', '', caseValue)) # remove parenthesis with content
+                        caseValue_list.append(re.sub('\(.*?\)', '', caseValue)) # remove parenthesis with content
+                        caseValue = caseValue_list
+                    elif match2:
+                        caseValue_list = []
+                        caseValue_list.append(re.sub('\[|\]', '', caseValue))  # just remove brackets
+                        caseValue_list.append(re.sub('\[.*?\]', '', caseValue)) # remove brackets with content
                         caseValue = caseValue_list
                     else:
                         caseValue = [caseValue]
@@ -620,7 +627,7 @@ def cleanCasesAndSplit(words):
                                 if info['lemma'].startswith(casev_splitted[-1]) and len(casev_splitted[-1]) < len(info['lemma']):
                                     verb_particle = casev_splitted[-1]
 
-                if not caseValue:
+                if not caseValues:
                     del(info['cases'][case])
                 else:
                     info['cases'][case] = caseValues
@@ -874,20 +881,10 @@ def dumpMorphistoLike(words, filename=None):
         ("Name-Fem_0","Name-Fem_s")
         ])
 
-    if filename == None:
-        filename = datetime.now().strftime("%Y-%m-%d-%H-%M-%S") + "_morphisto_like" + ".xml"
-    outfile = open(filename,'w')
-    outfile.write('<?xml version="1.0" encoding="utf-8"?>\n')
-    outfile.write('<?xml-stylesheet type="text/xsl" href="lexicon-transform.xslt"?>\n')
-    outfile.write("<smor>\n")
-    # allowed wordforms. only these word sorts will be written into the file
-    # allowed_wordsorts = ['Substantiv', 'Verb', 'Adjektiv']
-    for wordsort, wds in words.items():
+    # cache to remove duplicates and ensure proper sorting
+    cache = set()
 
-        # if wordsort in allowed_wordsorts :
-        #     pass # thats ok , go on 
-        # else: # not allowed, next please
-        #    continue # go to next wordsort
+    for wordsort, wds in words.items():
 
         for info in sorted(wds, key=lambda x: x.get('lemma')):
             # a list of hypothesis
@@ -923,20 +920,40 @@ def dumpMorphistoLike(words, filename=None):
                     # only if it it is a real class go on
                     if inflectClass == None or inflectClass == '' or inflectClass == '(None found)':
                         continue # go to next word
-                    outfile.write("\t<BaseStem>\n")
-                    try:
-                        if info["pos"] == 'V' and info["ge"] == True:
-                            outfile.write("\t\t<MorphMarker>ge</MorphMarker>\n")
-                    except:
-                        pass
-                    outfile.write("\t\t<Lemma>"+lemma+"</Lemma>\n")
-                    outfile.write("\t\t<Stem>"+stem+"</Stem>\n")
-                    outfile.write("\t\t<Pos>"+info["pos"]+"</Pos>\n")
-                    outfile.write("\t\t<Origin>" + origin + "</Origin>\n")
-                    outfile.write("\t\t<InfClass>"+inflectClass+"</InfClass>\n")
-                    outfile.write("\t</BaseStem>\n")
+
+                    if info["pos"] == 'V' and info.get("ge"):
+                        ge = True
+                    else:
+                        ge = False
+
+                    cache.add((info["pos"],lemma,stem,origin,inflectClass,ge))
+
+
+    if filename == None:
+        filename = datetime.now().strftime("%Y-%m-%d-%H-%M-%S") + "_morphisto_like" + ".xml"
+    outfile = open(filename,'w')
+    outfile.write('<?xml version="1.0" encoding="utf-8"?>\n')
+    outfile.write('<?xml-stylesheet type="text/xsl" href="lexicon-transform.xslt"?>\n')
+    outfile.write("<smor>\n")
+
+    for data in sorted(cache):
+        writeBaseStem(data, outfile)
+
     outfile.write("</smor>")
     outfile.close()
+
+
+def writeBaseStem(data,outfile):
+        pos,lemma,stem,origin,inflectClass,ge = data
+        outfile.write("\t<BaseStem>\n")
+        if ge:
+            outfile.write("\t\t<MorphMarker>ge</MorphMarker>\n")
+        outfile.write("\t\t<Lemma>"+lemma+"</Lemma>\n")
+        outfile.write("\t\t<Stem>"+stem+"</Stem>\n")
+        outfile.write("\t\t<Pos>"+pos+"</Pos>\n")
+        outfile.write("\t\t<Origin>" + origin + "</Origin>\n")
+        outfile.write("\t\t<InfClass>"+inflectClass+"</InfClass>\n")
+        outfile.write("\t</BaseStem>\n")
 
 # this function returns statistical data evaluated upon the opensource morphisto korpus
 # => http://www1.ids-mannheim.de/lexik/home/lexikprojekte/lexiktextgrid/morphisto.html
