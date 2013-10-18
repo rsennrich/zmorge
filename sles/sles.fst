@@ -18,7 +18,7 @@
 
 ALPHABET = [#Letter#] [#infl-class#] [#lexchar#]
 
-$Stem$   = [#LETTER#][#Letter#]+
+$Stem$   = [#LETTER#][#Letter#]*
 $stem$   = [#letter#]+
 $stem-v$ = (<ge>? [#letter#]+) | ([#letter#][#letter#]+<ge/zu>[#letter#]+)
 

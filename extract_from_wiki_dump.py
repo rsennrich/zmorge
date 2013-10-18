@@ -828,16 +828,14 @@ def generateInflectClasses(words):
     # 3. gather results and write them into the words dict
     # collect the results off the queue
     results = []
-    print("#### Wait till all jobs are done (#" + str(work_queue.qsize()) + ")")
-    while len(results) < todo:
-        try:
-            # print("waiting for result")
-            a_result = result_queue.get()
-            # print("Result:", a_result)
+    finished = 0
+    print("#### Wait till all jobs are done (#" + str(todo - len(results)) + ")")
+    while finished < config.num_processes:
+        a_result = result_queue.get()
+        if a_result is None:
+            finished += 1
+        else:
             results.append(a_result)
-        except:
-            if config.debug_lvl > 0: print("something went wrong while moving a result from the result queue to the results list")
-            pass
     print("all jobs are done")
     return results
 
@@ -908,13 +906,22 @@ def dumpMorphistoLike(words, filename=None):
             # one entry per spelling variant (#TODO: do we want to mark old orthography?)
             lemmas = [info["lemma"]]
             if 'alt_spelling' in info:
-                 lemmas += info["alt_spelling"]
+                 lemmas += [spelling for spelling in info["alt_spelling"] if not '-' in spelling]
 
             for lemma in lemmas:
                 if info["pos"] == 'V':
                     stem = getVerbStem(lemma)
+                elif lemma == info['lemma']:
+                    stem = info.get('stem', lemma)
                 else:
-                    stem = lemma
+                    if info.get('stem') == info['lemma']:
+                        stem = lemma
+                    # need some guessing for cases with a special plural stem *and* alternative spellings (Korpus, Korpora, Corpus)
+                    else:
+                        stem = guess_stem(info['lemma'], info['stem'], lemma)
+                        if not stem:
+                            if config.debug_lvl > 0: print('error in guess_stem ({0} - {1} - {2})'.format(info['lemma'], info['stem'], lemma))
+                            continue
 
                 for inflectClass in inflectClasses:
                     # only if it it is a real class go on
@@ -954,6 +961,28 @@ def writeBaseStem(data,outfile):
         outfile.write("\t\t<Origin>" + origin + "</Origin>\n")
         outfile.write("\t\t<InfClass>"+inflectClass+"</InfClass>\n")
         outfile.write("\t</BaseStem>\n")
+
+
+# given a lemma-stem pair (Korpus, Korpora), and an alternative spelling of the lemma (Corpus),
+# try to guess the stem in the alternative spelling (Corpora)
+def guess_stem(lemma, stem, alt_spelling):
+
+    # get suffix of lemma/stem (by cutting off common prefix)
+    i = 0
+    for i, (x,y) in enumerate(zip(lemma,stem)):
+        if x!=y:
+            break
+    suffix_lemma = lemma[i:]
+    suffix_stem = lemma[i:]
+
+    if alt_spelling.endswith(suffix_lemma):
+        alt_spelling_prefix = alt_spelling[:-len(suffix_lemma)]
+        return alt_spelling_prefix + suffix_stem
+    else:
+        return None
+
+
+
 
 # this function returns statistical data evaluated upon the opensource morphisto korpus
 # => http://www1.ids-mannheim.de/lexik/home/lexikprojekte/lexiktextgrid/morphisto.html
@@ -1095,6 +1124,12 @@ class Worker(multiprocessing.Process):
             'NNeut/Sg_0':   'FamName_0',
             }
 
+        self.plural_mapping = {
+            'm': ['NMasc/Pl'],
+            'f': ['NFem/Pl'],
+            'n': ['NNeut/Pl']
+            }
+
     def run(self):
         self.fst_analyser = FstWrapper()
         while True:
@@ -1103,6 +1138,7 @@ class Worker(multiprocessing.Process):
             if config.debug_lvl >  0: print("a worker wants to get a job (one of #" + str(self.work_queue.qsize()) + " left)")
             job = self.work_queue.get()
             if job is None:
+                self.result_queue.put(None)
                 break
             if config.debug_lvl > 1: print("worker gotta job => " + str(job))
             word_sort = job[0]
@@ -1141,33 +1177,31 @@ class Worker(multiprocessing.Process):
                     elif not ('<Pl>' in casesmorfeatures):
                         only_plural = False
                 if only_singular:
-                    # when there are only singular cases map the inflectional classes to a SingularClass or a Nameclass 
-                    if config.debug_lvl > 0: print(">>>>>>>>>>>>> a noun with NO PLURAL forms was detected, map inflectional classes")
-                    mapped_hypothesis = []
-
-                    for hypo in (hypothesis or []) :
-                        if hypo in self.singular_mappings:
-                            singular_infl_class = self.singular_mappings[hypo]
-                        else:
-                            match = self.regex_nouns_singular.match(hypo)
-                            singular_infl_class = match.group(1) + "/Sg" + (match.group(2) or "")
-                            singular_infl_class_fallback = match.group(1) + "/Sg" # TODO: test singular noun fix
-                        # filter arising inflClasses not all are possible
-                        if singular_infl_class in self.possible_singular_infl_classes:
-                            mapped_hypothesis.append(singular_infl_class)
-                        elif singular_infl_class_fallback in self.possible_singular_infl_classes: # TODO: not sure if this is ok...
-                            mapped_hypothesis.append(singular_infl_class_fallback)
-                        else:
-                            if config.debug_lvl > 0: print singular_infl_class + ' and ' + singular_infl_class_fallback + " are not in " + str(self.possible_singular_infl_classes)
-                    mapped_hypothesis = list(set(mapped_hypothesis))
-                    if config.debug_lvl > 0: print("mapped classes are: ", mapped_hypothesis)
-                    hypothesis = mapped_hypothesis
+                    hypothesis = self.singular_mapping(hypothesis)
 
                 elif only_plural:
                     if all(hypo.endswith('_x') for hypo in hypothesis):
                         hypothesis = ['N?/Pl_x']
                     elif all(hypo.endswith('_0') for hypo in hypothesis):
                         hypothesis = ['N?/Pl_0']
+
+                # if no inflection class is found, try to find a pair of classes (one singular class, one plural class) that predicts all word forms
+                elif not hypothesis:
+                    singular_hypothesis = self.singular_mapping(set.intersection(*[word_infos['analysed_as'][case][-1] for case in word_infos['analysed_as'] if 'Singular' in case]))
+                    plural_hypothesis = self.plural_mapping.get(word_infos.get('gender'), [])
+                    if len(singular_hypothesis) == 1 and len(plural_hypothesis) == 1:
+                        hypothesis = singular_hypothesis
+                        plural_forms = [word_infos['cases'][case][0] for case in word_infos['cases'] if 'Plural' in case]
+                        # if all plural forms are the same, we can generate an entry for it
+                        if len(set(plural_forms)) == 1 and not ' ' in plural_forms[0]:
+                            pluralentry = copy.deepcopy(word_infos)
+                            pluralentry['stem'] = plural_forms[0]
+                            if config.debug_lvl > 0: print("separate plural stem: {0} - {1}".format(word_infos['lemma'], pluralentry['stem']))
+                            pluralentry['inflectionalClasses'] = plural_hypothesis
+                            del pluralentry["analysed_as"]
+                            del pluralentry["smor_features"]
+                            self.result_queue.put((job[0], pluralentry))
+
 
                 # umlaut filter: sles may allow inflection class with umlautung, even if there is no vowel that can have umlaut
                 lemma_umlaut_count = len(re.findall('ö|ä|ü|Ü|Ä|Ö', word_infos['lemma']))
@@ -1305,6 +1339,28 @@ class Worker(multiprocessing.Process):
             return list(*caseInflectClasses)
         else:
             return []
+
+    def singular_mapping(self, hypothesis):
+        mapped_hypothesis = []
+
+        for hypo in (hypothesis or []) :
+            if hypo in self.singular_mappings:
+                singular_infl_class = self.singular_mappings[hypo]
+            else:
+                match = self.regex_nouns_singular.match(hypo)
+                singular_infl_class = match.group(1) + "/Sg" + (match.group(2) or "")
+                singular_infl_class_fallback = match.group(1) + "/Sg"
+            # filter arising inflClasses not all are possible
+            if singular_infl_class in self.possible_singular_infl_classes:
+                mapped_hypothesis.append(singular_infl_class)
+            elif singular_infl_class_fallback in self.possible_singular_infl_classes:
+                mapped_hypothesis.append(singular_infl_class_fallback)
+            else:
+                if config.debug_lvl > 0: print singular_infl_class + ' and ' + singular_infl_class_fallback + " are not in " + str(self.possible_singular_infl_classes)
+        mapped_hypothesis = list(set(mapped_hypothesis))
+        if config.debug_lvl > 0: print("mapped classes are: ", mapped_hypothesis)
+        return mapped_hypothesis
+
 
 #singular-only adjectives and dealing with optional e in superlative
 def adjective_filter(word, hypotheses):
