@@ -3,11 +3,8 @@ debug_lvl = 0
 # if debug_lvl higher then 0 this path will be loaded in extractFromWikidump (if none given)
 debug_wikidump = "/home/beet/00_studien_zeugs/wiktionary_morph_builder/data/test_file.xml" 
 nondebug_wikidump = "/home/beet/00_studien_zeugs/wiktionary_morph_builder/data/dewiktionary-20130129-pages-articles.xml"
-#num_processes = 10 
-# num_processes = 40 
-# num_processes = 80 
-# num_processes = 200 
-num_processes = 600 
+
+num_processes = 4
 # pathToMorphistoXml = "/home/beet/sda8/00_cl_praktikum_data/morphisto_lexikon/lexicon.xml"
 pathToMorphistoXml = "/home/beet/00_studien_zeugs/morphisto_lexicon/lexicon.xml"   # for my server
 

@@ -26,7 +26,7 @@ except ImportError:
 
 from fst_wrapper import FstWrapper # interactive interface for ... TODO: better description
 import wik_regex    # collection of regexes used
-import wiktionary_config as config # configs in here
+import config
 
 ########## TODO / TODOs
 # - Logger einfügen (elegant durch print ersetzung!)
@@ -922,6 +922,10 @@ def dumpMorphistoLike(words, filename=None):
                         if not stem:
                             if config.debug_lvl > 0: print('error in guess_stem ({0} - {1} - {2})'.format(info['lemma'], info['stem'], lemma))
                             continue
+
+                # skip lowercase nouns (mostly noise, and can allow troublesome compounds)
+                if lemma and lemma[0].islower() and (info["pos"] == "NN" or info["pos"] == "NPROP"):
+                    continue
 
                 for inflectClass in inflectClasses:
                     # only if it it is a real class go on
