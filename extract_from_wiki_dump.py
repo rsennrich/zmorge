@@ -102,7 +102,7 @@ def extractFromWikidump(wikidump_filepath=None):
     filter_non_linguistic_case = re.compile("(?i)\s*(Bild|Weitere_|Hilfsverb|keine weiteren|Befehl_du|Passiv)") # TODO: move to wik_regex
 
     # values that indicate no entry
-    blacklist = set(["\xe2\x80\x94", "\xe2\x80\x93", "?", "-"])
+    blacklist = set(["—", "–", "?", "-"])
 
     # variables for context information
     last_word = None
@@ -466,7 +466,7 @@ def cleanCasesAndSplit(words):
     )
 
     # values that indicate no entry
-    blacklist = set(["\xe2\x80\x94", "\xe2\x80\x93", "?", "-"])
+    blacklist = set(["—", "–", "?", "-"])
 
     general_cleanup_post = re.compile("^\s*(.*?)'?\s*$")
     # first do the splitting of words
@@ -572,7 +572,7 @@ def cleanCasesAndSplit(words):
                     ### first remove some html snippets and other always disturbing things
                     caseValue = re.sub("</?small>", "", caseValue)
                     caseValue = re.sub("</?center>", "", caseValue)
-                    caseValue = re.sub("\xe2\x80\x99", "", caseValue) # removes ´
+                    caseValue = re.sub("’", "", caseValue) # removes ´
 
                     # replace '-' with nothing e.g. 'x-beinig' becomes 'xbeinig'
                     caseValue = re.sub('-', '', caseValue)
@@ -1516,7 +1516,7 @@ def reformatForAnaly(word, casev):
     casev = re.sub("-","", casev)
     casev = re.sub(" ","", casev)
     casev = re.sub(",","", casev)
-    casev = re.sub("\xc2\xad","", casev)
+    casev = re.sub("\xad","", casev)
     casev = re.sub("–","", casev)
 
     if word['pos'] == 'NN':
