@@ -1,3 +1,4 @@
+from __future__ import unicode_literals, print_function
 ### generell confs
 debug_lvl = 0
 # if debug_lvl higher then 0 this path will be loaded in extractFromWikidump (if none given)

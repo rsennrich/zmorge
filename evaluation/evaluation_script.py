@@ -3,7 +3,7 @@
 # Copyright ©2013 University of Zürich
 # Author: Beat Kunz <beat.kunz@access.uzh.ch>
 
-from __future__ import division
+from __future__ import unicode_literals, print_function, division
 from subprocess import call
 import os
 from collections import defaultdict
@@ -14,7 +14,7 @@ import yaml
 try:
     from yaml import CLoader as Loader, CDumper as Dumper, CSafeDumper as SafeDumper
 except ImportError:
-    print "could not load the faster cloader/cdumper/csafedumper for yaml package.\n will load standard loader/dumper"
+    print("could not load the faster cloader/cdumper/csafedumper for yaml package.\n will load standard loader/dumper")
     from yaml import Loader, Dumper, SafeDumper
 
 ##### set files
@@ -24,7 +24,7 @@ shell_script_name = './create_test_output.sh'
 analysis_dir = 'testoutput'
 
 ##### call bash scripts that generate analysis of 
-print('Python calls shell script', shell_script_name, 'with', benchmark_file_name)
+print(('Python calls shell script', shell_script_name, 'with', benchmark_file_name))
 call([shell_script_name, benchmark_file_name])
 # print('Python finished calling the shell script')
 
@@ -476,12 +476,12 @@ if __name__ == '__main__':
     total = defaultdict(lambda: defaultdict(int))
     reported = defaultdict(set)
 
-    for benchmark_word, word_info_all in benchmark_dict.items():
+    for benchmark_word, word_info_all in list(benchmark_dict.items()):
         for word_info in word_info_all:
             typeinfo = (word_info['lemma'], word_info['pos'], tuple(sorted(word_info['morph'].items())))
             coarse_pos = pos_map[word_info['pos']]
             total[coarse_pos][typeinfo] += 1
-            for transducername, twords in diff_analysis.items():
+            for transducername, twords in list(diff_analysis.items()):
                 try:
                     word_info_anas = twords[benchmark_word]
                 except:
@@ -497,7 +497,7 @@ if __name__ == '__main__':
                         ##print('pos ana vs info: ' + word_info['pos'] + ' ' + ana['pos'])
                         if (word_info['lemma'].lower() == ana['lemma'].lower() or ('|' in word_info['lemma'] and ana['lemma'] in word_info['lemma'].split('|'))) and (word_info['pos'] == ana['pos'] or word_info['pos'] == 'NE' and ana['pos'] == 'NPROP'):
                             all_morph_correct = True  # NOTE: this stays only true if all morphological information given by the benchmark word can be found in the analysis
-                            for morph_name, morph_value in ana['morph'].items():
+                            for morph_name, morph_value in list(ana['morph'].items()):
                                 if morph_name in word_info['morph'] and morph_value != word_info['morph'][morph_name]:
                                     all_morph_correct = False
                                     break # from inner loop
@@ -515,7 +515,7 @@ if __name__ == '__main__':
 #                            reported[transducername].add((word_info['wordform'], typeinfo))
 
     #token stats: sum the number of occurrences of (correct) word forms
-    print "token stats: name, NN, NE, V, ADJ, total"
+    print("token stats: name, NN, NE, V, ADJ, total")
     for transducername in results:
         recall_dict = defaultdict(float)
         for tag in ['NN', 'NE', 'V', 'ADJ']:
@@ -523,12 +523,12 @@ if __name__ == '__main__':
             recall_dict[tag] = recall
         recall = sum(sum(results[transducername][tag].values()) for tag in results[transducername]) / sum(sum(total[tag].values()) for tag in total)
         recall_dict['total'] = recall
-        print "{0:<15} & {1:.1f} & {2:.1f} & {3:.1f} & {4:.1f} & {5:.1f} \\\\".format(transducername, recall_dict['NN']*100, recall_dict['NE']*100, recall_dict['V']*100, recall_dict['ADJ']*100, recall_dict['total']*100)
+        print("{0:<15} & {1:.1f} & {2:.1f} & {3:.1f} & {4:.1f} & {5:.1f} \\\\".format(transducername, recall_dict['NN']*100, recall_dict['NE']*100, recall_dict['V']*100, recall_dict['ADJ']*100, recall_dict['total']*100))
 
-    print ''
+    print('')
 
     #type stats: number of (correct) types corresponds to the length of the dictionaries
-    print "type stats: name, NN, NE, V, ADJ, total"
+    print("type stats: name, NN, NE, V, ADJ, total")
     for transducername in results:
         recall_dict = defaultdict(float)
         for tag in ['NN', 'NE', 'V', 'ADJ']:
@@ -536,4 +536,4 @@ if __name__ == '__main__':
             recall_dict[tag] = recall
         recall = sum(len(results[transducername][tag]) for tag in results[transducername]) / sum(len(total[tag]) for tag in total)
         recall_dict['total'] = recall
-        print "{0:<15} & {1:.1f} & {2:.1f} & {3:.1f} & {4:.1f} & {5:.1f} \\\\".format(transducername, recall_dict['NN']*100, recall_dict['NE']*100, recall_dict['V']*100, recall_dict['ADJ']*100, recall_dict['total']*100)
+        print("{0:<15} & {1:.1f} & {2:.1f} & {3:.1f} & {4:.1f} & {5:.1f} \\\\".format(transducername, recall_dict['NN']*100, recall_dict['NE']*100, recall_dict['V']*100, recall_dict['ADJ']*100, recall_dict['total']*100))

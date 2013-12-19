@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*- 
 
+from __future__ import unicode_literals, print_function
 import re
 import fileinput 
 import time
@@ -12,6 +13,7 @@ import multiprocessing
 import sys
 import copy
 import json
+import codecs
 
 try:
     from lxml import etree as ET
@@ -21,7 +23,7 @@ except ImportError:
 try:
     from yaml import CLoader as Loader, CDumper as Dumper, CSafeDumper as SafeDumper
 except ImportError:
-    print "could not load the faster cloader/cdumper/csafedumper for yaml package.\n will load standard loader/dumper"
+    print("could not load the faster cloader/cdumper/csafedumper for yaml package.\n will load standard loader/dumper")
     from yaml import Loader, Dumper, SafeDumper
 
 from fst_wrapper import FstWrapper # interactive interface for ... TODO: better description
@@ -39,7 +41,7 @@ import config
 
 # NOTE: debug_lvl can be adjusted in wiktionary_debug_lvl.py
 
-print("Debug is " + ( "ON (level: " + str(config.debug_lvl) + ")"  if config.debug_lvl > 0 else "OFF" ))
+print(("Debug is " + ( "ON (level: " + str(config.debug_lvl) + ")"  if config.debug_lvl > 0 else "OFF" )))
 
 workers = [] # NOTE: one global variable ... isnt that ugly ?
 
@@ -47,7 +49,7 @@ workers = [] # NOTE: one global variable ... isnt that ugly ?
 def mapToDict(d):
     """recursively convert defaultdicts into regular dicts"""
     d = dict(d)
-    d.update((k, mapToDict(v)) for k,v in d.items() if isinstance(v, defaultdict))
+    d.update((k, mapToDict(v)) for k,v in list(d.items()) if isinstance(v, defaultdict))
     return d
 
 # returns all indices of occurrences of substring sword in string t
@@ -73,7 +75,7 @@ def extractFromWikidump(wikidump_filepath=None):
             wikidump_filepath = config.debug_wikidump
         else: # do it with real (huge!) file
             wikidump_filepath = config.nondebug_wikidump
-    print("reading file '" + wikidump_filepath + "'")
+    print(("reading file '" + wikidump_filepath + "'"))
     ######## preparing data structure
     ## structure: wordsort > word > cases > case > value
     ##                            > wordsort additional informational
@@ -117,7 +119,7 @@ def extractFromWikidump(wikidump_filepath=None):
         if title is None:
             elem.clear()
             continue
-        word = title.text.encode("UTF-8") #TODO: make script use unicode literals instead of encoding strings as utf-8
+        word = title.text
 
         # skip multi-word pages
         if not word or " " in word or "-" in word or ":" in word:
@@ -136,7 +138,7 @@ def extractFromWikidump(wikidump_filepath=None):
         entry = defaultdict(dict)
         entry['lemma'] = word
 
-        text = text_element.text.encode("UTF-8").splitlines() #TODO: make script use unicode literals instead of encoding strings as utf-8
+        text = text_element.text.splitlines()
 
         for line in text:
             i += 1
@@ -196,7 +198,7 @@ def extractFromWikidump(wikidump_filepath=None):
                     pass
                 matches = extract_state_activator.match(line)
                 if matches and wordsort:
-                    if config.debug_lvl > 0: print "############ Try to extract for:", last_word, last_wordsort, matches.groups()
+                    if config.debug_lvl > 0: print("############ Try to extract for:", last_word, last_wordsort, matches.groups())
                     extract_state = True
             elif extract_state:
                 # first check if we are still in the zone of interest
@@ -208,7 +210,7 @@ def extractFromWikidump(wikidump_filepath=None):
                 # now let's extract
                 try:
                     case, word_in_case = extractor_cases.match(line).groups()
-                    if config.debug_lvl > 0: print "## extraction: ", last_word, ":", case, "=>", word_in_case
+                    if config.debug_lvl > 0: print("## extraction: ", last_word, ":", case, "=>", word_in_case)
                     # cleanup
                     if '}}' in word_in_case and not '{{' in word_in_case: #inflection table ending without newline
                         word_in_case = word_in_case.split('}}')[0]
@@ -217,14 +219,14 @@ def extractFromWikidump(wikidump_filepath=None):
                         continue
                     word_in_case = extractor_case_filter.sub('',word_in_case)
                     if filter_non_linguistic_case.match(case):
-                        if config.debug_lvl > 0: print "Found non-linguistic case. dont add it " 
+                        if config.debug_lvl > 0: print("Found non-linguistic case. dont add it ") 
                         continue
                     word_in_case = word_in_case.strip()
                     if word_in_case:
                         entry["cases"][case] = word_in_case
                 except:
                     if config.debug_lvl > 0: print("EXCEPTION. jump to next line") # TODO: better handling ?
-                    if config.debug_lvl > 0: print("=> could not parse line: " + line)
+                    if config.debug_lvl > 0: print(("=> could not parse line: " + line))
                     continue
         if wordsort:
             words[wordsort].append(entry)
@@ -242,28 +244,42 @@ class MyJSONEncoder(json.JSONEncoder):
 
 def dumpJSON(words, filename=None):
     #if config.debug_lvl == 0:
-    print  "dump into json file (this could take a while)"
+    print("dump into json file (this could take a while)")
     if filename == None:
         filename = datetime.now().strftime("%Y-%m-%d-%H-%M-%S") + "_wikiwords" + ".json"
-    json.dump(words, open(filename,'w'), indent=2, ensure_ascii=False, cls=MyJSONEncoder)
+    if sys.version_info < (3, 0):
+        outfile = codecs.open(filename, 'w', encoding='UTF-8')
+    else:
+        outfile = open(filename,'w', encoding='UTF-8')
+    json.dump(words, outfile, indent=2, ensure_ascii=False, cls=MyJSONEncoder)
 
 # any json can be loaded with this function
 def loadJSON(filePath):
-    return json.load(open(filePath))
+    if sys.version_info < (3, 0):
+        stream = codecs.open(filePath, 'r', encoding='UTF-8')
+    else:
+        stream = open(filePath, 'r', encoding='UTF-8')
+    return json.load(stream)
 
 # NOTE: automatically transforms defaultdicts to dicts 
 def dumpYaml(words, filename=None):
     #if config.debug_lvl == 0:
-    print  "dump into yaml file (this could take a while)"
+    print("dump into yaml file (this could take a while)")
     if filename == None:
         filename = datetime.now().strftime("%Y-%m-%d-%H-%M-%S") + "_wikiwords" + ".yaml"
-    stream = file(filename,'w')
+    if sys.version_info < (3, 0):
+        stream = codecs.open(filename, 'w', encoding='UTF-8')
+    else:
+        stream = open(filename,'w', encoding='UTF-8')
     yaml.dump(mapToDict(words), stream, Dumper=Dumper, allow_unicode=True)
     # yaml.safe_dump(mapToDict(words), stream=stream, allow_unicode=True) # TODO: makes yaml unloadable
 
 # any yaml can be loaded with this function
 def loadYaml(filePath):
-    stream = file(filePath, 'r')
+    if sys.version_info < (3, 0):
+        stream = codecs.open(filePath, 'r', encoding='UTF-8')
+    else:
+        stream = open(filePath, 'r', encoding='UTF-8')
     return yaml.load(stream, Loader=Loader)
 
 # this function maps collected informations from wiktionary to smor features
@@ -352,23 +368,23 @@ def extractSmorFeatures(words):
 
     # compile regexes
     for feature_lvl in [wordsort_features, gender_features, wordcase_features]:
-        for key, value in feature_lvl.items():
+        for key, value in list(feature_lvl.items()):
             feature_lvl[re.compile(".*" + key + ".*")] = value # TODO: dangerous compile? 
             del(feature_lvl[key]) # delete old entry
 
     
     # now let's do the big work
-    for wordsort, wds in words.items():
+    for wordsort, wds in list(words.items()):
         # at this level extract wordsort specific features e.g. pos-class, stem
         # this info will added below to each of the words of this wordsort
         wordsort_smor_features = []
         pos = None
         # get the POS (part of speech) information for free
-        if wordsort in wordsort_pos.keys():
+        if wordsort in list(wordsort_pos.keys()):
             pos = wordsort_pos[wordsort] 
-        for feature_regex, feature in wordsort_features.items():
+        for feature_regex, feature in list(wordsort_features.items()):
             if feature_regex.match(wordsort) != None or feature_regex.match((pos or '')) != None:            
-                if config.debug_lvl > 0: print "Matched wordsort => add feature: " + feature
+                if config.debug_lvl > 0: print("Matched wordsort => add feature: " + feature)
                 wordsort_smor_features.append(feature)
 
         for info in wds:
@@ -378,16 +394,16 @@ def extractSmorFeatures(words):
 
             # at this level extract word specific features e.g. gender for nouns
             word_smor_features = []
-            for feature_regex, feature in gender_features.items():
+            for feature_regex, feature in list(gender_features.items()):
                 if info.get('gender') and feature_regex.match(info['gender']):
                     word_smor_features.append(feature)
 
             # prepare smor features dict
             info["smor_features"] = defaultdict(list)
-            for case, case_value in info['cases'].items():
+            for case, case_value in list(info['cases'].items()):
                 # at this level extract wordcase specific features e.g. case (nominatic, accustativ), time ...
                 wordcase_smor_features = []
-                for feature_regex, feature in wordcase_features.items():
+                for feature_regex, feature in list(wordcase_features.items()):
                     if feature_regex.match(case) != None:            
                         wordcase_smor_features.append(feature)
 
@@ -408,22 +424,22 @@ def getVerbStem(verb):
     elif verb[-3:] == 'ern' or verb[-3:] == 'eln':
         return verb[:-1] 
     else:
-        if config.debug_lvl > 0: print("!!!! COULD NOT determine verbstem of '" + verb + "'")
+        if config.debug_lvl > 0: print(("!!!! COULD NOT determine verbstem of '" + verb + "'"))
         return verb
 
 # just an info function
 # prints wordsorts and number of words for each
 def wordStats(words):
-    print "#### wordsort and count each"
-    for k,v in words.items():
-        print k, "=>" , len(v)
+    print("#### wordsort and count each")
+    for k,v in list(words.items()):
+        print(k, "=>" , len(v))
 
 # just an info function
 def extractPossibleCases(words):
     all_cases = set()
-    for wordsort, wds in words.items():
-        for word, info in wds.items():
-            for case in info['cases'].keys():
+    for wordsort, wds in list(words.items()):
+        for word, info in list(wds.items()):
+            for case in list(info['cases'].keys()):
                 all_cases.add(case)
     return all_cases
 
@@ -455,7 +471,7 @@ def cleanCasesAndSplit(words):
     general_cleanup_post = re.compile("^\s*(.*?)'?\s*$")
     # first do the splitting of words
 
-    for wordsort, wds in words.items():
+    for wordsort, wds in list(words.items()):
         for info in wds:
 
             # create separate entries for each singular/plural form
@@ -486,13 +502,13 @@ def cleanCasesAndSplit(words):
                     info['gender'] = 'n'
                 #TODO: we may be able to extract correct gender for first names from Wiktionary ("Bedeutung: männlicher Vorname")
                 elif wordsort == 'Vorname' or 'Vorname' in info['info']:
-                    if config.debug_lvl > 0:  print('no gender specified, (Vorname): ' +  info['lemma'])
+                    if config.debug_lvl > 0:  print(('no gender specified, (Vorname): ' +  info['lemma']))
                 #TODO: those seem to be mostly last names; should we extract this info (from "Bedeutung: Familienname")
                 elif wordsort == 'Eigenname' or 'Eigenname' in info['info']:
-                    if config.debug_lvl > 0:  print('no gender specified, (Eigenname): ' +  info['lemma'])
+                    if config.debug_lvl > 0:  print(('no gender specified, (Eigenname): ' +  info['lemma']))
                 #TODO: anything we can do here?
                 elif wordsort == 'Substantiv' or 'Substantiv' in info['info']:
-                    if config.debug_lvl > 0:  print('no gender specified, (Substantiv): ' +  info['lemma'])
+                    if config.debug_lvl > 0:  print(('no gender specified, (Substantiv): ' +  info['lemma']))
                 info['info'] = alternatives[0]
                 continue
             elif len(genders) == 1 and len(alternatives) == 1:
@@ -505,7 +521,7 @@ def cleanCasesAndSplit(words):
 
             # the rest is for the alternatives
             alternatives = alternatives[1:]
-            if config.debug_lvl > 0: print('SPLITTING of info with Wortart result: ' + str(alternatives) + ' and gender ' + genders + ' (lemma: ' + info['lemma'] + ')')
+            if config.debug_lvl > 0: print(('SPLITTING of info with Wortart result: ' + str(alternatives) + ' and gender ' + genders + ' (lemma: ' + info['lemma'] + ')'))
 
             # if there are several genders, make a copy of the original, but with different gender 
             for gender in genders[1:]:
@@ -539,7 +555,7 @@ def cleanCasesAndSplit(words):
                 enforce_singular_gender(info)
 
 
-    for wordsort, wds in words.items():
+    for wordsort, wds in list(words.items()):
 
         for info in wds:
 
@@ -548,7 +564,7 @@ def cleanCasesAndSplit(words):
 
             verb_particle = None
 
-            for case, caseValues in info['cases'].items():
+            for case, caseValues in list(info['cases'].items()):
                 if type(caseValues) != list:
                     caseValues = [caseValues]
                 new_caseValue = []
@@ -612,7 +628,7 @@ def cleanCasesAndSplit(words):
                     new_caseValue += caseValue
 
                 # filter empty strings and double entries
-                caseValues = list(set(filter(lambda x: x != "", new_caseValue)))
+                caseValues = list(set([x for x in new_caseValue if x != ""]))
 
 
                 # identify (and discard) separable verb prefix
@@ -704,9 +720,9 @@ def pickWord(words, wordsort=None):
     if wordsort != None:
         rand_wordsort = wordsort
     else:
-        rand_wordsort = sample(words.keys(), 1)[0]
-    print("Wordsort:", rand_wordsort)
-    return sample(words[rand_wordsort].values(), 1)[0]
+        rand_wordsort = sample(list(words.keys()), 1)[0]
+    print(("Wordsort:", rand_wordsort))
+    return sample(list(words[rand_wordsort].values()), 1)[0]
 
 # this function calls the essential other functions
 # @words: is a dictionary created by 'extractFromWikidump' or such loaded by 'loadYaml'
@@ -714,19 +730,19 @@ def pickWord(words, wordsort=None):
 # NOTE: this function can be seen as an example in which order to call the essential functions
 def doAll(words):
     # first clean the words from unnecassary stuff
-    print "## do cleanup of cases"
+    print("## do cleanup of cases")
     words = cleanCasesAndSplit(words) #NOTE:from here on, all casevalues are lists of strings (even when only 1 string)
     # extract the smor features
-    print "## extract smor features"
+    print("## extract smor features")
     words = extractSmorFeatures(words)
-    print "## guess inflectional classes"
+    print("## guess inflectional classes")
     results = generateInflectClasses(words)
-    print "## fill hypothesis into words dict"
+    print("## fill hypothesis into words dict")
     # NOTE: a result has the structure [<wordsort>, <wordinfos enriched with possible hypothesis>]
     newwords = defaultdict(list)
     for result in results:
         newwords[result[0]].append(result[1])
-    print "## project analyses to abbreviations"
+    print("## project analyses to abbreviations")
     abbreviation_projection(newwords)
     return newwords
 
@@ -735,11 +751,11 @@ def doAll(words):
 # TODO: make return value, describe it and do it the same way as morphisto stats
 def statsInflectionalClasses(words):
     stats = dict()
-    for wordsort, wds in words.items():
-        print "### '"+ wordsort +"' inflectional class counts for (total: " + str(len(wds)) + ")"
+    for wordsort, wds in list(words.items()):
+        print("### '"+ wordsort +"' inflectional class counts for (total: " + str(len(wds)) + ")")
         counts = defaultdict(int)
         nr_identified = 0 # nr of words only ONE inflectional class was found in the end
-        for word, info in wds.items():
+        for word, info in list(wds.items()):
             # a list of hypothesis
             try:
                 if info['inflectionalClasses'] != None:
@@ -752,15 +768,15 @@ def statsInflectionalClasses(words):
                 counts["(None: could not join)"] += 1
         stats[wordsort] = counts
         # print result
-        print "IDENTIFIED:", nr_identified, "(thats " + str(nr_identified*1.0/len(wds)) + ")"
+        print("IDENTIFIED:", nr_identified, "(thats " + str(nr_identified*1.0/len(wds)) + ")")
         for key in sorted(counts, key=counts.get, reverse=True):
-            print "'" + key + "'", " => ", counts[key]
+            print("'" + key + "'", " => ", counts[key])
     return stats
 
 # @stats: output from statsInflectionalClasses or statsMorphisto...
 def statsPrintPretty(stats, onlyIdentified=True, output_file=None):
     output_string = ''
-    for wordsort, counts in stats.items():
+    for wordsort, counts in list(stats.items()):
         nr_identified = 0 # nr of words only ONE inflectional class was found in the end
         nr_ambi = 0 # ambigious, several infl classes possible
         fail_count = 0
@@ -801,7 +817,7 @@ def generateInflectClasses(words):
 
 	# 1. first gather jobs for workers
     todo = 0
-    for wordsort, wds in words.items():
+    for wordsort, wds in list(words.items()):
         for info in wds:
             if not is_complete(info):
                 continue
@@ -812,7 +828,7 @@ def generateInflectClasses(words):
             # add to work queue
             work_queue.put(job)
             todo += 1
-    if config.debug_lvl > 0: print("########## loaded jobs into work queue. There are #" + str(work_queue.qsize()) + " jobs.")
+    if config.debug_lvl > 0: print(("########## loaded jobs into work queue. There are #" + str(work_queue.qsize()) + " jobs."))
 
     # 2. create workers and let them work
     workers = []
@@ -829,7 +845,7 @@ def generateInflectClasses(words):
     # collect the results off the queue
     results = []
     finished = 0
-    print("#### Wait till all jobs are done (#" + str(todo - len(results)) + ")")
+    print(("#### Wait till all jobs are done (#" + str(todo - len(results)) + ")"))
     while finished < config.num_processes:
         a_result = result_queue.get()
         if a_result is None:
@@ -882,7 +898,7 @@ def dumpMorphistoLike(words, filename=None):
     # cache to remove duplicates and ensure proper sorting
     cache = set()
 
-    for wordsort, wds in words.items():
+    for wordsort, wds in list(words.items()):
 
         for info in sorted(wds, key=lambda x: x.get('lemma')):
             # a list of hypothesis
@@ -920,7 +936,7 @@ def dumpMorphistoLike(words, filename=None):
                     else:
                         stem = guess_stem(info['lemma'], info['stem'], lemma)
                         if not stem:
-                            if config.debug_lvl > 0: print('error in guess_stem ({0} - {1} - {2})'.format(info['lemma'], info['stem'], lemma))
+                            if config.debug_lvl > 0: print(('error in guess_stem ({0} - {1} - {2})'.format(info['lemma'], info['stem'], lemma)))
                             continue
 
                 # skip lowercase nouns (mostly noise, and can allow troublesome compounds)
@@ -942,7 +958,10 @@ def dumpMorphistoLike(words, filename=None):
 
     if filename == None:
         filename = datetime.now().strftime("%Y-%m-%d-%H-%M-%S") + "_morphisto_like" + ".xml"
-    outfile = open(filename,'w')
+    if sys.version_info < (3, 0):
+        outfile = codecs.open(filename, 'w', encoding='UTF-8')
+    else:
+        outfile = open(filename,'w', encoding='UTF-8')
     outfile.write('<?xml version="1.0" encoding="utf-8"?>\n')
     outfile.write('<?xml-stylesheet type="text/xsl" href="lexicon-transform.xslt"?>\n')
     outfile.write("<smor>\n")
@@ -1000,7 +1019,7 @@ def statsMorphisto(pathToMorphistoXml=None):
         else:
             print("no path could be found to morphisto xml")
             return None
-    print("Using '" + pathToMorphistoXml + "'")
+    print(("Using '" + pathToMorphistoXml + "'"))
     stats = defaultdict(lambda: defaultdict(int))
     # regexes
     r_pos = re.compile(".*<Pos>(.*)<\/Pos>.*")
@@ -1139,12 +1158,12 @@ class Worker(multiprocessing.Process):
         while True:
 
             # get a task
-            if config.debug_lvl >  0: print("a worker wants to get a job (one of #" + str(self.work_queue.qsize()) + " left)")
+            if config.debug_lvl >  0: print(("a worker wants to get a job (one of #" + str(self.work_queue.qsize()) + " left)"))
             job = self.work_queue.get()
             if job is None:
                 self.result_queue.put(None)
                 break
-            if config.debug_lvl > 1: print("worker gotta job => " + str(job))
+            if config.debug_lvl > 1: print(("worker gotta job => " + str(job)))
             word_sort = job[0]
             word_infos = job[1]
  
@@ -1156,7 +1175,7 @@ class Worker(multiprocessing.Process):
                 word_infos['inflectionalClasses'] = [mapped_static_infl_class]
                 job[1] = word_infos
                 # store the result
-                if config.debug_lvl > 0: print("a worker got a job (#" + str(self.work_queue.qsize()) + " jobs left) (pos is:" + str(word_infos['pos']) +") => static map to: " + mapped_static_infl_class)
+                if config.debug_lvl > 0: print(("a worker got a job (#" + str(self.work_queue.qsize()) + " jobs left) (pos is:" + str(word_infos['pos']) +") => static map to: " + mapped_static_infl_class))
                 self.result_queue.put(job)
                 continue # go back to top of while loop
 
@@ -1165,7 +1184,7 @@ class Worker(multiprocessing.Process):
                 self.result_queue.put(job)
                 continue
 
-            if config.debug_lvl > 0: print("a worker got a job (#" + str(self.work_queue.qsize()) + " jobs left) (pos is:" + str(word_infos['pos']) +")")
+            if config.debug_lvl > 0: print(("a worker got a job (#" + str(self.work_queue.qsize()) + " jobs left) (pos is:" + str(word_infos['pos']) +")"))
 
             hypothesis = self.generateHypothesis(word_infos) ######################## HERE the hypothesis gets generated
             original_hypothesis = copy.deepcopy(hypothesis) # we can fallback to this, if we filter too much
@@ -1175,7 +1194,7 @@ class Worker(multiprocessing.Process):
             if word_infos['pos'] == "NN":
                 only_singular = True
                 only_plural = True
-                for casename, casesmorfeatures in word_infos['smor_features'].items():
+                for casename, casesmorfeatures in list(word_infos['smor_features'].items()):
                     if not ('<Sg>' in casesmorfeatures):
                         only_singular = False
                     elif not ('<Pl>' in casesmorfeatures):
@@ -1201,7 +1220,7 @@ class Worker(multiprocessing.Process):
                         if len(set(plural_forms)) == 1 and not ' ' in plural_forms[0]:
                             pluralentry = copy.deepcopy(word_infos)
                             pluralentry['stem'] = plural_forms[0]
-                            if config.debug_lvl > 0: print("separate plural stem: {0} - {1}".format(word_infos['lemma'], pluralentry['stem']))
+                            if config.debug_lvl > 0: print(("separate plural stem: {0} - {1}".format(word_infos['lemma'], pluralentry['stem'])))
                             pluralentry['inflectionalClasses'] = plural_hypothesis
                             del pluralentry["analysed_as"]
                             del pluralentry["smor_features"]
@@ -1211,7 +1230,7 @@ class Worker(multiprocessing.Process):
                 # umlaut filter: sles may allow inflection class with umlautung, even if there is no vowel that can have umlaut
                 lemma_umlaut_count = len(re.findall('ö|ä|ü|Ü|Ä|Ö', word_infos['lemma']))
                 umlautung = False
-                for v in word_infos['cases'].values():
+                for v in list(word_infos['cases'].values()):
                     for vv in v:
                         if lemma_umlaut_count < len(re.findall('ö|ä|ü|Ü|Ä|Ö', vv)):
                             umlautung = True
@@ -1219,7 +1238,7 @@ class Worker(multiprocessing.Process):
                     if umlautung: break
                 if hypothesis and not umlautung:
                     # only keep hypothesis which do not contain '$'. (no umlaut in plural)
-                    hypothesis = filter(lambda x: not '$' in x, hypothesis)
+                    hypothesis = [x for x in hypothesis if not '$' in x]
 
                 hypothesis = self.disambiguate_es_s(word_infos, hypothesis)
 
@@ -1240,7 +1259,7 @@ class Worker(multiprocessing.Process):
                             if newhypo in self.possible_name_classes:
                                 hypothesis[i] = newhypo
                             else:
-                                if config.debug_lvl > 0: print newhypo  + " is  not in " + str(self.possible_name_classes)
+                                if config.debug_lvl > 0: print(newhypo  + " is  not in " + str(self.possible_name_classes))
 
                     #duplicate removal
                     hypothesis = sorted(set(hypothesis))
@@ -1276,7 +1295,7 @@ class Worker(multiprocessing.Process):
 
         caseInflectClasses = [] # a list of sets
         word['analysed_as'] = defaultdict(list)
-        for caseName, caseValue in word['cases'].items():
+        for caseName, caseValue in list(word['cases'].items()):
             caseInflectClass = set()
             for casev in caseValue:
                 casev = reformatForAnaly(word, casev)
@@ -1322,14 +1341,14 @@ class Worker(multiprocessing.Process):
                 word['ge'] = True
 
         # finally produce the intersection of all the sets
-        if config.debug_lvl > 1: print(">>>>>>>>>>>>>>>> before insection:" + str(caseInflectClasses))
+        if config.debug_lvl > 1: print((">>>>>>>>>>>>>>>> before insection:" + str(caseInflectClasses)))
         word['analysed_as']['XbeforeIntersectionX'] = copy.deepcopy(caseInflectClasses)
         if len(caseInflectClasses) > 1:
             intersection = list(set.intersection(*caseInflectClasses))
             word['analysed_as']['XafterIntersectionX'] = copy.deepcopy(intersection)
-            if config.debug_lvl > 1: print "<<<<<<<<<<<<<< Intersection: ", intersection
+            if config.debug_lvl > 1: print("<<<<<<<<<<<<<< Intersection: ", intersection)
             if intersection == []: 
-                if config.debug_lvl > 0: print("could not find a intersection of these inflectional classes", str(caseInflectClasses)) 
+                if config.debug_lvl > 0: print(("could not find a intersection of these inflectional classes", str(caseInflectClasses))) 
             return intersection 
         elif len(caseInflectClasses) == 1:
             return list(*caseInflectClasses)
@@ -1352,9 +1371,9 @@ class Worker(multiprocessing.Process):
             elif singular_infl_class_fallback in self.possible_singular_infl_classes:
                 mapped_hypothesis.append(singular_infl_class_fallback)
             else:
-                if config.debug_lvl > 0: print singular_infl_class + ' and ' + singular_infl_class_fallback + " are not in " + str(self.possible_singular_infl_classes)
+                if config.debug_lvl > 0: print(singular_infl_class + ' and ' + singular_infl_class_fallback + " are not in " + str(self.possible_singular_infl_classes))
         mapped_hypothesis = list(set(mapped_hypothesis))
-        if config.debug_lvl > 0: print("mapped classes are: ", mapped_hypothesis)
+        if config.debug_lvl > 0: print(("mapped classes are: ", mapped_hypothesis))
         return mapped_hypothesis
 
     # special case _es and _s Genitiv. only take _es if there is at least one casevalue which has the ending 'es'
@@ -1395,7 +1414,7 @@ def adjective_filter(word, hypotheses):
 # check if at least one genitive word form ends in -es
 # used for disambiguation between -es and -s inflection classes
 def has_es_genitive(word_infos):
-    for casename in word_infos['cases'].keys():
+    for casename in list(word_infos['cases'].keys()):
         if 'Genitiv' in casename:
             for casev in word_infos['cases'][casename]:
                 if casev[-2:] == 'es':
@@ -1511,8 +1530,8 @@ def reformatForAnaly(word, casev):
 # NOTE: a dict with analysed words is expected as argument (e.g. output of 'doAll' function)
 def extractFailedAnalysis(words):
     failed_words = defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: defaultdict())))
-    for wordsort, wds in words.items():
-        for word, info in wds.items():
+    for wordsort, wds in list(words.items()):
+        for word, info in list(wds.items()):
             try:
                 iC = info['inflectionalClasses']
                 if iC == '(None found)' or iC == None or iC == "None" or iC == "" or iC == [] or iC == '(None)':

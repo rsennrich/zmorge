@@ -1,19 +1,22 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*- 
+
+from __future__ import unicode_literals, print_function
 import re
 import pexpect
 import config
 
-
 class FstWrapper():
     def __init__(self):
-        if config.debug_lvl > 0: print "try to execute following command:\n'" + config.exec_string + "'"
-        self.child = pexpect.spawn(config.exec_string)
+        if config.debug_lvl > 0: print("try to execute following command:\n'" + config.exec_string + "'")
+        self.child = pexpect.spawnu(config.exec_string)
         self.child.delaybeforesend = 0
         self.child.expect(["analyze> ", pexpect.EOF])
         self.morAnalyseMode = config.morAnalyseMode 
         # regex for stem guessing NOTE: for now only used for adjectives
         self.regex_adj_stem = re.compile("^(.*?)<") # TODO: move to regex file
         before = self.child.before
-        if config.debug_lvl > 0: print before
+        if config.debug_lvl > 0: print(before)
         if self.child.terminated:
             raise RuntimeError(before)
 
@@ -57,18 +60,18 @@ class FstWrapper():
     def openShell(self):
 
         while True:
-            if config.debug_lvl > 0: print "################################\n", self.child.before, "############################\n"
-            input_string = raw_input("input<<<<")
-            if config.debug_lvl > 0: print "Sending an input to the prog:", input_string
+            if config.debug_lvl > 0: print("################################\n", self.child.before, "############################\n")
+            input_string = input("input<<<<")
+            if config.debug_lvl > 0: print("Sending an input to the prog:", input_string)
             if input_string == "":
-                if config.debug_lvl > 0: print "input string was '\\nn' => toggle to Mode"
+                if config.debug_lvl > 0: print("input string was '\\nn' => toggle to Mode")
                 self.toggleMorMode()
             self.child.sendline(input_string)
             if self.morAnalyseMode == True:
-                if config.debug_lvl > 0: print "### in analyse mode"
+                if config.debug_lvl > 0: print("### in analyse mode")
                 self.child.expect(["analyze> ", pexpect.EOF])
             else:
-                if config.debug_lvl > 0: print "### in generate mode"
+                if config.debug_lvl > 0: print("### in generate mode")
                 self.child.expect(["generate> ", pexpect.EOF])
 
     def toggleMorMode(self):
@@ -106,7 +109,7 @@ class FstWrapper():
                         possibleAna = False
                         # print("Special filtering for Adjective: filtered => " + ana)
                 except Exception as e:
-                    print e
+                    print(e)
                     possibleAna = False
 
             if possibleAna == True: # if it is still true, then add it
@@ -130,7 +133,7 @@ class FstWrapper():
         # first find all symbols
         symbols = self.findSymbols(analysis)
         if len(symbols) == 0:
-            if config.debug_lvl > 0: print "no inflectional class could be found (even no symbols)"
+            if config.debug_lvl > 0: print("no inflectional class could be found (even no symbols)")
             return None # no symbols => no infl class 
 
         # look for inflectional class(es) symbol NOTE: only ONE inflectional class should be found
@@ -157,11 +160,11 @@ class FstWrapper():
                 inflClasses.append(sym)
 
         if len(inflClasses) > 1:
-            print "SEVERAL INFLECTIONAL CLASSES FOUND! NOT POSSIBLE!" # TODO: error handling
+            print("SEVERAL INFLECTIONAL CLASSES FOUND! NOT POSSIBLE!") # TODO: error handling
             return None # TODO: or return None ?! or all?  inflClasses 
 
         if len(inflClasses) == 0:
-            print "no inflectional class could be found"
+            print("no inflectional class could be found")
             return None
 
         # when here, everything is ok

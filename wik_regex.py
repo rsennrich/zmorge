@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+
+from __future__ import unicode_literals, print_function
+
 # extract state activater/deactivtor
 activator =   "\s*\{\{\s*(Deutsch (.*) (Übersicht|Deklination)|Verb\-Tabelle)"
 deactivator = "\s*\|?\}\}\s*" # TODO:evt sogar "\s*\}\}.*"
