@@ -11,6 +11,7 @@ import re
 import sys
 from datetime import datetime
 import yaml
+import io
 try:
     from yaml import CLoader as Loader, CDumper as Dumper, CSafeDumper as SafeDumper
 except ImportError:
@@ -289,7 +290,7 @@ if __name__ == '__main__':
 
     ##### load benchmark ( / Gold-Daten ) and map grammatical analysis tags
     # load
-    benchmark_file = open(benchmark_file_name)
+    benchmark_file = io.open(benchmark_file_name, encoding="UTF-8")
 
     benchmark_dict = defaultdict(list)
 
@@ -408,7 +409,7 @@ if __name__ == '__main__':
         #print("loading testouput: " + filename)
         diff_analysis[filename] = defaultdict(list)
         diff_analysis_type[filename] = defaultdict(lambda: None)
-        testoutput_file = open(analysis_dir + "/" + filename)
+        testoutput_file = io.open(analysis_dir + "/" + filename, encoding="UTF-8")
         word_analysis = None
         for line in testoutput_file:
             lemma = ''
