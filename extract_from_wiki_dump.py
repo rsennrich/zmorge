@@ -26,7 +26,7 @@ except ImportError:
     print("could not load the faster cloader/cdumper/csafedumper for yaml package.\n will load standard loader/dumper")
     from yaml import Loader, Dumper, SafeDumper
 
-from fst_wrapper import FstWrapper # interactive interface for ... TODO: better description
+from fst_wrapper import FstWrapper # interactive interface to finite-state morphology for inflection prediction
 import wik_regex    # collection of regexes used
 import config
 
@@ -65,16 +65,11 @@ def findWordIndices(t, word_indeces, sword):
     return word_indeces
 
 
-def extractFromWikidump(wikidump_filepath=None):
+def extractFromWikidump(wikidump_filepath):
 
     # if the wiki version changes, check for differences before updating this value
     wiki_version = "{http://www.mediawiki.org/xml/export-0.8/}"
 
-    if wikidump_filepath == None:
-        if config.debug_lvl > 0: # if debug, load smaller text file 
-            wikidump_filepath = config.debug_wikidump
-        else: # do it with real (huge!) file
-            wikidump_filepath = config.nondebug_wikidump
     print(("reading file '" + wikidump_filepath + "'"))
     ######## preparing data structure
     ## structure: wordsort > word > cases > case > value
@@ -1009,16 +1004,8 @@ def guess_stem(lemma, stem, alt_spelling):
 
 # this function returns statistical data evaluated upon the opensource morphisto korpus
 # => http://www1.ids-mannheim.de/lexik/home/lexikprojekte/lexiktextgrid/morphisto.html
-# TODO: describe return value
-# TODO: do it the same way like the stats function
-def statsMorphisto(pathToMorphistoXml=None):
-    if pathToMorphistoXml == None:
-        # try it in config
-        if config.pathToMorphistoXml != None:
-            pathToMorphistoXml = config.pathToMorphistoXml
-        else:
-            print("no path could be found to morphisto xml")
-            return None
+def statsMorphisto(pathToMorphistoXml):
+
     print(("Using '" + pathToMorphistoXml + "'"))
     stats = defaultdict(lambda: defaultdict(int))
     # regexes
@@ -1539,3 +1526,15 @@ def extractFailedAnalysis(words):
             except KeyError:
                 failed_words[wordsort][word] = info
     return failed_words
+
+
+if __name__ == '__main__':
+
+    if len(sys.argv) != 2:
+        sys.stderr.write('Usage: {0} dewiktionary-XXX-pages-articles-multistream.xml output_file\n'.format(sys.argv[0]))
+
+    words = extractFromWikidump(sys.argv[1])
+    #dumpJSON(words, filename='wiktionary-raw-debug.json')
+    newwords = doAll(words)
+    #dumpJSON(newwords, filename='wiktionary-debug.json')
+    dumpMorphistoLike(newwords, filename=sys.argv[2])

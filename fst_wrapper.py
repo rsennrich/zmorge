@@ -8,11 +8,11 @@ import config
 
 class FstWrapper():
     def __init__(self):
-        if config.debug_lvl > 0: print("try to execute following command:\n'" + config.exec_string + "'")
-        self.child = pexpect.spawnu(config.exec_string)
+        if config.debug_lvl > 0: print("try to execute following command:\n'" + config.fst_string + "'")
+        self.child = pexpect.spawnu(config.fst_string)
         self.child.delaybeforesend = 0
         self.child.expect(["analyze> ", pexpect.EOF])
-        self.morAnalyseMode = config.morAnalyseMode 
+        self.morAnalyseMode = True
         # regex for stem guessing NOTE: for now only used for adjectives
         self.regex_adj_stem = re.compile("^(.*?)<") # TODO: move to regex file
         before = self.child.before
