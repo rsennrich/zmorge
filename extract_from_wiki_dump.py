@@ -20,12 +20,6 @@ try:
 except ImportError:
     from xml.etree import cElementTree as ET
 
-try:
-    from yaml import CLoader as Loader, CDumper as Dumper, CSafeDumper as SafeDumper
-except ImportError:
-    print("could not load the faster cloader/cdumper/csafedumper for yaml package.\n will load standard loader/dumper")
-    from yaml import Loader, Dumper, SafeDumper
-
 from fst_wrapper import FstWrapper # interactive interface to finite-state morphology for inflection prediction
 import wik_regex    # collection of regexes used
 import config
@@ -255,27 +249,6 @@ def loadJSON(filePath):
     else:
         stream = open(filePath, 'r', encoding='UTF-8')
     return json.load(stream)
-
-# NOTE: automatically transforms defaultdicts to dicts 
-def dumpYaml(words, filename=None):
-    #if config.debug_lvl == 0:
-    print("dump into yaml file (this could take a while)")
-    if filename == None:
-        filename = datetime.now().strftime("%Y-%m-%d-%H-%M-%S") + "_wikiwords" + ".yaml"
-    if sys.version_info < (3, 0):
-        stream = codecs.open(filename, 'w', encoding='UTF-8')
-    else:
-        stream = open(filename,'w', encoding='UTF-8')
-    yaml.dump(mapToDict(words), stream, Dumper=Dumper, allow_unicode=True)
-    # yaml.safe_dump(mapToDict(words), stream=stream, allow_unicode=True) # TODO: makes yaml unloadable
-
-# any yaml can be loaded with this function
-def loadYaml(filePath):
-    if sys.version_info < (3, 0):
-        stream = codecs.open(filePath, 'r', encoding='UTF-8')
-    else:
-        stream = open(filePath, 'r', encoding='UTF-8')
-    return yaml.load(stream, Loader=Loader)
 
 # this function maps collected informations from wiktionary to smor features
 # e.g. if some case with 'Akkusativ' is available => the smor feature <Acc> should be saved
@@ -720,8 +693,7 @@ def pickWord(words, wordsort=None):
     return sample(list(words[rand_wordsort].values()), 1)[0]
 
 # this function calls the essential other functions
-# @words: is a dictionary created by 'extractFromWikidump' or such loaded by 'loadYaml'
-# better name
+# @words: is a dictionary created by 'extractFromWikidump'
 # NOTE: this function can be seen as an example in which order to call the essential functions
 def doAll(words):
     # first clean the words from unnecassary stuff

@@ -10,13 +10,7 @@ from collections import defaultdict
 import re
 import sys
 from datetime import datetime
-import yaml
 import io
-try:
-    from yaml import CLoader as Loader, CDumper as Dumper, CSafeDumper as SafeDumper
-except ImportError:
-    print("could not load the faster cloader/cdumper/csafedumper for yaml package.\n will load standard loader/dumper")
-    from yaml import Loader, Dumper, SafeDumper
 
 ##### set files
 # benchmark_file_name = 'r7-test.conll'
