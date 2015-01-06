@@ -62,7 +62,7 @@ def findWordIndices(t, word_indeces, sword):
 def extractFromWikidump(wikidump_filepath):
 
     # if the wiki version changes, check for differences before updating this value
-    wiki_version = "{http://www.mediawiki.org/xml/export-0.8/}"
+    wiki_version = "{http://www.mediawiki.org/xml/export-0.10/}"
 
     print(("reading file '" + wikidump_filepath + "'"))
     ######## preparing data structure
