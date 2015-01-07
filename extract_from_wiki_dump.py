@@ -519,8 +519,11 @@ def cleanCasesAndSplit(words):
                     words[alt_wordsort].append(entry)
 
             if len(genders) > 0:
-                info['gender'] = genders[0]
-                enforce_singular_gender(info)
+                if wordsort == 'Nachname' or 'Nachname' in info['info'] or wordsort == 'Toponym' or 'Toponym' in info['info']:
+                    pass
+                else:
+                    info['gender'] = genders[0]
+                    enforce_singular_gender(info)
 
 
     for wordsort, wds in list(words.items()):
