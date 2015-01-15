@@ -660,7 +660,7 @@ def split_columns(info, info_list, key='Plural'):
 
         if split:
             for case in list(info['cases']):
-                if key in case and key + ' 1' not in case:
+                if key in case and key + ' 1' not in case and not case.endswith(key):
                     del info['cases'][case]
 
 # when there are multiple singular forms, make sure that we only keep the ones that have the correct gender
