@@ -548,10 +548,6 @@ def cleanCasesAndSplit(words):
                     # replace '-' with nothing e.g. 'x-beinig' becomes 'xbeinig'
                     caseValue = re.sub('-', '', caseValue)
 
-                    # sometimes a comment (ending with colon) precedes the word form
-                    if ':' in caseValue:
-                        caseValue = caseValue.split(':')[1]
-
                     # pre cleanup
                     caseValue = caseValue.strip(' ![]\'\"')
 
@@ -582,6 +578,9 @@ def cleanCasesAndSplit(words):
 
                     # split alternatives if there is a '<br />'
                     caseValue = [entry for casev in caseValue for entry in regex_pagebreak.split(casev)]
+
+                    # sometimes a comment (ending with colon) precedes the word form
+                    caseValue = [c.split(':',1)[-1] for c in caseValue]
 
                     # alternatives separated by "," or "/"
                     caseValue = [entry for casev in caseValue for entry in casev.split(", ")]
