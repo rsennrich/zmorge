@@ -132,6 +132,13 @@ def extractFromWikidump(wikidump_filepath):
         for line in text:
             i += 1
 
+            # new entry
+            if line.startswith('== ') and line.endswith(' =='):
+                if len(entry) > 1 and wordsort:
+                    words[wordsort].append(entry)
+                entry = defaultdict(dict)
+                entry['lemma'] = word
+
             # extract spelling variations
             if ('{{Alternative Schreibweisen}}' in line or '{{Alte Rechtschreibung}}' in line or '{{Veraltete Schreibweisen}}' in line) and i < len(text):
                 alt_spellings = set(extractor_alt_spelling.findall(text[i]))
