@@ -160,7 +160,7 @@ def extractFromWikidump(wikidump_filepath):
                     entry['origin'] = 'fremd'
 
             # extract origin
-            if wordsort == 'Abkürzung' and '{{Bedeutungen}}' in line and not 'meaning' in entry:
+            if '{{Bedeutungen}}' in line:
 
                 # find end of origin text block
                 for j in range(i, len(text)):
@@ -168,10 +168,18 @@ def extractFromWikidump(wikidump_filepath):
                         break
                 meaning_text = '\n'.join(text[i:j])
 
-                # word may have multiple origins; we prioritize 'nativ', then 'klassisch'; default if no match is 'nativ'
-                link = extractor_link.search(meaning_text)
-                if link:
-                    entry['meaning'] = link.groups()[0]
+                if wordsort == 'Abkürzung' and not 'meaning' in entry:
+                    # word may have multiple origins; we prioritize 'nativ', then 'klassisch'; default if no match is 'nativ'
+                    link = extractor_link.search(meaning_text)
+                    if link:
+                        entry['meaning'] = link.groups()[0]
+
+                # gender of first names is inconsistently annotated (sometimes like for other nouns; sometimes only in 'Bedeutung' text)
+                if entry['info'] and 'Vorname' in entry['info']:
+                    if 'weiblicher Vorname' in meaning_text or 'weiblicher [[Vorname]]' in meaning_text:
+                        entry['info'] += " {{f}}"
+                    if 'männlicher Vorname' in meaning_text or 'männlicher [[Vorname]]' in meaning_text:
+                        entry['info'] += " {{m}}"
 
             if not extract_state:
                 try:
