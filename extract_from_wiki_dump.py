@@ -129,15 +129,24 @@ def extractFromWikidump(wikidump_filepath):
 
         text = text_element.text.splitlines()
 
+        german = False
+
         for line in text:
             i += 1
 
             # new entry
             if line.startswith('== ') and line.endswith(' =='):
+                if 'Sprache|Deutsch' in line:
+                    german = True
+                else:
+                    german = False
                 if len(entry) > 1 and wordsort:
                     words[wordsort].append(entry)
                 entry = defaultdict(dict)
                 entry['lemma'] = word
+
+            if not german:
+                continue
 
             # extract spelling variations
             if ('{{Alternative Schreibweisen}}' in line or '{{Alte Rechtschreibung}}' in line or '{{Veraltete Schreibweisen}}' in line) and i < len(text):
