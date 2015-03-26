@@ -116,7 +116,7 @@ def extractFromWikidump(wikidump_filepath):
             continue
 
         text_element = elem.find('.//' + wiki_version + 'text')
-        if text_element is None:
+        if text_element is None or text_element.text is None:
             elem.clear()
             continue
 
