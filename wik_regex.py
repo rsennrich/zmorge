@@ -23,7 +23,7 @@ origin_foreign = r"(?i)englisch|engl\.|französisch|franz\.|italienisch|ital\."
 link = r"\[\[([^\|\]]+?)(?:\|.*?)?\]\](?!:)"
 
 # verbtable = '\{\{Verb\-Tabelle'
-cases = "\s*\|\s*(.*)\s*=(.*)"
+cases = "\s*\|\s*(.*?)\s*=(.*)"
 
 #remove mark-ed up information from inflection table (pronunciation help, small-font articles etc.)
 case_filter = "{{.*?}}"

@@ -568,6 +568,8 @@ def cleanCasesAndSplit(words):
                     caseValue = re.sub("</?small>", "", caseValue)
                     caseValue = re.sub("</?center>", "", caseValue)
                     caseValue = re.sub("’", "", caseValue) # removes ´
+                    caseValue = re.sub("<ref>.*", "", caseValue)
+                    caseValue = re.sub("<!--.*-->", "", caseValue)
 
                     # replace '-' with nothing e.g. 'x-beinig' becomes 'xbeinig'
                     caseValue = re.sub('-', '', caseValue)
