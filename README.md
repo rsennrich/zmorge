@@ -4,7 +4,7 @@ Zmorge - The Zurich Morphological Analyzer for German
 This project contains scripts to extract a morphological lexicon for German from Wiktionary,
 which can be used with the SMOR morphology to build a morphological analyzer.
 
-Pre-compiled analyzers are available at http://kitt.ifi.uzh.ch/kitt/zmorge/
+Pre-compiled analyzers are available at https://pub.cl.uzh.ch/users/sennrich/zmorge/
 
 REQUIREMENTS
 ------------
