@@ -20,6 +20,7 @@ try:
 except ImportError:
     from xml.etree import cElementTree as ET
 
+from xml.sax.saxutils import escape
 from fst_wrapper import FstWrapper # interactive interface to finite-state morphology for inflection prediction
 import wik_regex    # collection of regexes used
 import config
@@ -970,6 +971,8 @@ def dumpMorphistoLike(words, filename=None):
 
 def writeBaseStem(data,outfile):
         pos,lemma,stem,origin,inflectClass,ge = data
+        lemma = escape(lemma)
+        stem = escape(stem)
         outfile.write("\t<BaseStem>\n")
         if ge:
             outfile.write("\t\t<MorphMarker>ge</MorphMarker>\n")
