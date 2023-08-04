@@ -150,7 +150,10 @@ def extractFromWikidump(wikidump_filepath):
                 continue
 
             # extract spelling variations
-            if ('{{Alternative Schreibweisen}}' in line or '{{Alte Rechtschreibung}}' in line or '{{Veraltete Schreibweisen}}' in line) and i < len(text):
+            if ( '{{Alternative Schreibweisen}}' in line or
+                 '{{Alte Rechtschreibung}}' in line or
+                 '{{Veraltete Schreibweisen}}' in line or
+                 '{{Nicht mehr gültige Schreibweisen}}' in line) and i < len(text):
                 alt_spellings = set(extractor_alt_spelling.findall(text[i]))
                 alt_spellings.difference_update(set(['Schweiz', 'Österreich', 'Liechtenstein', 'Deutschland'])) # names of regions where spelling variation occurs are sometimes extracted by accident
                 if 'alt_spelling' in entry:
