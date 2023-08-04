@@ -89,7 +89,7 @@ def extractFromWikidump(wikidump_filepath):
     extractor_case_filter = re.compile(wik_regex.case_filter)
 
     # filters after base-extraction
-    filter_non_linguistic_case = re.compile("(?i)\s*(Bild|Weitere_|Hilfsverb|keine weiteren|Befehl_du|Passiv)") # TODO: move to wik_regex
+    filter_non_linguistic_case = re.compile("(?i)\s*(Bild|Weitere_|Hilfsverb|keine weiteren|Befehl_du|Passiv|Genus)") # TODO: move to wik_regex
 
     # values that indicate no entry
     blacklist = set(["—", "–", "?", "-"])
@@ -237,7 +237,16 @@ def extractFromWikidump(wikidump_filepath):
                         continue
                     word_in_case = word_in_case.strip()
                     if word_in_case:
-                        entry["cases"][case] = word_in_case
+                        # new formatting for alternativ forms:
+                        # "Singular Genitiv*" -> map to old formatting, which is then split again down the line
+                        if case.endswith('*'):
+                            case = case.strip('*')
+                            if case in entry["cases"]:
+                                entry["cases"][case] += '<br />' + word_in_case
+                            else:
+                                entry["cases"][case] = word_in_case
+                        else:
+                            entry["cases"][case] = word_in_case
                 except:
                     if config.debug_lvl > 0: print("EXCEPTION. jump to next line") # TODO: better handling ?
                     if config.debug_lvl > 0: print(("=> could not parse line: " + line))
