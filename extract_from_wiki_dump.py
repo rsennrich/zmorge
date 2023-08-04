@@ -529,6 +529,8 @@ def cleanCasesAndSplit(words):
             if config.debug_lvl > 0: print(('SPLITTING of info with Wortart result: ' + str(alternatives) + ' and gender ' + genders + ' (lemma: ' + info['lemma'] + ')'))
 
             # if there are several genders, make a copy of the original, but with different gender 
+            if len(genders) > 1 and not info['gender']:
+                info['gender'] = genders[0]
             for gender in genders[1:]:
                 entry = copy.deepcopy(info)
                 entry['gender'] = gender
@@ -1249,7 +1251,45 @@ class Worker(multiprocessing.Process):
                     word_infos['pos'] = 'NPROP'
                     hypothesis = sorted(set([self.family_name_map.get(hypo,hypo) for hypo in hypothesis]))
 
-                elif word_infos['info'] and 0 < len(re.findall('Eigenname|Vorname|Toponym', word_infos['info'])) or word_sort in ['Eigenname','Vorname','Toponym']:
+
+                nprop_match = None
+                if word_sort in ['Eigenname','Vorname','Toponym', 'Nachname']:
+                    nprop_match = word_sort
+                elif word_infos['info']:
+                    matches = re.findall('Eigenname|Vorname|Toponym|Nachname', word_infos['info'])
+                    if matches:
+                        nprop_match = matches[0]
+
+                if nprop_match:
+                    # some proper name come without inflection tables. Use default entries.
+                    if not hypothesis and not word_infos.get('cases'):
+                        if nprop_match == 'Toponym':
+                            if config.debug_lvl > 0: print("no inflection found for toponym", word_infos['lemma'], ", assuming default.")
+                            if word_infos.get('gender') == 'm':
+                                hypothesis = ['NMasc/Sg_s']
+                            elif word_infos.get('gender') == 'n':
+                                hypothesis = ['NNeut/Sg_s']
+                            elif word_infos.get('gender') == 'f':
+                                hypothesis = ['NFem/Sg']
+
+                        elif nprop_match == 'Vorname':
+                            if config.debug_lvl > 0: print("no inflection found for vorname", word_infos['lemma'], ", assuming default.")
+                            if word_infos.get('gender') == 'm':
+                                hypothesis = ['NMasc_s_s']
+                            elif word_infos.get('gender') == 'n':
+                                hypothesis = ['NNeut_s_s']
+                            elif word_infos.get('gender') == 'f':
+                                hypothesis = ['NFem_s_s']
+
+                        elif nprop_match == 'Nachname':
+                            if config.debug_lvl > 0: print("no inflection found for nachname", word_infos['lemma'], ", assuming default.")
+                            if word_infos.get('gender') == 'm':
+                                hypothesis = ['NMasc_s_s', 'NMasc_0_x']
+                            elif word_infos.get('gender') == 'n':
+                                hypothesis = ['NNeut_s_s', 'NNeut_0_x']
+                            elif word_infos.get('gender') == 'f':
+                                hypothesis = ['NFem_0_x']
+
                     word_infos['pos'] = 'NPROP'
                     for i, hypo in enumerate(hypothesis):
                         if hypo in self.name_mapping:
@@ -1350,7 +1390,7 @@ class Worker(multiprocessing.Process):
             word['analysed_as']['XafterIntersectionX'] = copy.deepcopy(intersection)
             if config.debug_lvl > 1: print("<<<<<<<<<<<<<< Intersection: ", intersection)
             if intersection == []: 
-                if config.debug_lvl > 0: print(("could not find a intersection of these inflectional classes", str(caseInflectClasses))) 
+                if config.debug_lvl > 0: print(word['stem'], ": could not find a intersection of these inflectional classes", str(caseInflectClasses))
             return intersection 
         elif len(caseInflectClasses) == 1:
             return list(*caseInflectClasses)
