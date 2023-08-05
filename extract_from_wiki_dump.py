@@ -89,7 +89,7 @@ def extractFromWikidump(wikidump_filepath):
     extractor_case_filter = re.compile(wik_regex.case_filter)
 
     # filters after base-extraction
-    filter_non_linguistic_case = re.compile("(?i)\s*(Bild|Weitere_|Hilfsverb|keine weiteren|Befehl_du|Passiv|Genus)") # TODO: move to wik_regex
+    filter_non_linguistic_case = re.compile("(?i)\s*(Bild|Weitere_|Hilfsverb|keine weiteren|Befehl_du|Passiv|unpersönlich)") # TODO: move to wik_regex
 
     # values that indicate no entry
     blacklist = set(["—", "–", "?", "-"])
@@ -494,7 +494,7 @@ def cleanCasesAndSplit(words):
             if info.get('gender'):
                 enforce_singular_gender(info)
                 continue
-            genders = ''.join(re.findall('\{\{[mnf]{0,3}\}\}', info['info'])).replace(' ','').replace('{','').replace('}','')
+            genders = ''.join(re.findall('\{\{[mnf]{0,3}\.?\}\}', info['info'])).replace(' ','').replace('{','').replace('}','').replace('.','')
             genders = ''.join(set(genders)) # remove duplicates
             if wordsort == 'Substantiv' or wordsort == 'Abkürzung':
                 alternatives = [info['info']]
@@ -529,13 +529,17 @@ def cleanCasesAndSplit(words):
             if config.debug_lvl > 0: print(('SPLITTING of info with Wortart result: ' + str(alternatives) + ' and gender ' + genders + ' (lemma: ' + info['lemma'] + ')'))
 
             # if there are several genders, make a copy of the original, but with different gender 
-            if len(genders) > 1 and not info['gender']:
-                info['gender'] = genders[0]
-            for gender in genders[1:]:
-                entry = copy.deepcopy(info)
-                entry['gender'] = gender
+            if len(genders) > 1:
+                if not info['gender']:
+                    info['gender'] = genders[0]
+                    new_genders = genders[1:]
+                else:
+                    new_genders = set(genders) - set(info['gender'])
+                for gender in new_genders:
+                    entry = copy.deepcopy(info)
+                    entry['gender'] = gender
 
-                words[wordsort].append(entry)
+                    words[wordsort].append(entry)
 
             for i, alt in enumerate(alternatives):
                 # look for a new wordsort
@@ -707,6 +711,21 @@ def split_columns(info, info_list, key='Plural'):
 def enforce_singular_gender(info):
     gender = info.get('gender')
 
+    # for new-style inflection tables that use "Genus" entry to remove incorrect gender ones
+    invalid_cases = []
+    for i in range(1,6):
+        if 'Genus ' + str(i) in info['cases']:
+            if gender != info['cases']['Genus ' + str(i)]:
+                invalid_cases.append(i)
+    for key in list(info['cases']):
+        for i in invalid_cases:
+            if str(i) in key:
+                del info['cases'][key]
+
+    if invalid_cases:
+        return
+
+    # for old-style inflection tables that use articles
     allowed = True
     keys = ['Nominativ Singular'] + ['Nominativ Singular ' + str(i) for i in range(1,6)]
     for key in keys:
@@ -1338,6 +1357,10 @@ class Worker(multiprocessing.Process):
         caseInflectClasses = [] # a list of sets
         word['analysed_as'] = defaultdict(list)
         for caseName, caseValue in list(word['cases'].items()):
+
+            # Genus is part of inflection table, but no need to look up genus with SMOR
+            if caseName.startswith('Genus'):
+                continue
             caseInflectClass = set()
             for casev in caseValue:
                 casev = reformatForAnaly(word, casev)
