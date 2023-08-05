@@ -1218,6 +1218,8 @@ class Worker(multiprocessing.Process):
                 only_singular = True
                 only_plural = True
                 for casename, casesmorfeatures in list(word_infos['smor_features'].items()):
+                    if casename == 'Genus':
+                        continue
                     if not ('<Sg>' in casesmorfeatures):
                         only_singular = False
                     elif not ('<Pl>' in casesmorfeatures):
@@ -1530,6 +1532,14 @@ def abbreviation_heuristics(word, pos=None, gender=None, infl_class=None):
     if not gender:
         gender = word.get('gender')
 
+    # gender is marked in inflection table as separate line Genus
+    if not gender:
+        try:
+            gender = word['cases']['Genus'][0]
+        except (IndexError, KeyError) as error:
+            pass
+
+    # gender is marked in inflection table by providing articles
     if not gender:
         try:
             nom_sg = [word['cases'][case] for case in word['cases'] if 'Nominativ Singular' in case][0][0]
