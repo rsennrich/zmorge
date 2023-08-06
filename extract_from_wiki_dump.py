@@ -216,6 +216,7 @@ def extractFromWikidump(wikidump_filepath):
                 matches = extract_state_activator.match(line)
                 if matches and wordsort:
                     if config.debug_lvl > 0: print("############ Try to extract for:", last_word, last_wordsort, matches.groups())
+                    entry['inflection_heading'] = matches[1]
                     extract_state = True
             elif extract_state:
                 # first check if we are still in the zone of interest
@@ -1218,7 +1219,7 @@ class Worker(multiprocessing.Process):
                 only_singular = True
                 only_plural = True
                 for casename, casesmorfeatures in list(word_infos['smor_features'].items()):
-                    if casename == 'Genus':
+                    if casename.startswith('Genus') or casename == 'Stamm':
                         continue
                     if not ('<Sg>' in casesmorfeatures):
                         only_singular = False
@@ -1267,11 +1268,24 @@ class Worker(multiprocessing.Process):
 
                 hypothesis = self.disambiguate_es_s(word_infos, hypothesis)
 
+                #adjektivische Deklination. No inflection table, but stem is provided.
+                if (word_infos['info'] and len(re.findall('adjektivische Deklination', word_infos['info'])) > 0):
+                    if not hypothesis:
+                        stem = word_infos['cases'].get('Stamm')
+                        if stem:
+                            word_infos['lemma'] = stem[0]
+                            word_infos['stem'] = stem[0]
+                        if word_infos.get('gender') == 'm':
+                            hypothesis = ['NMasc-Adj']
+                        elif word_infos.get('gender') == 'n':
+                            hypothesis = ['NNeut-Adj']
+                        elif word_infos.get('gender') == 'f':
+                            hypothesis = ['NFem-Adj']
+
                 # mapping of names
                 if (word_infos['info'] and len(re.findall('Nachname', word_infos['info'])) > 0) or word_sort == 'Nachname':
                     word_infos['pos'] = 'NPROP'
                     hypothesis = sorted(set([self.family_name_map.get(hypo,hypo) for hypo in hypothesis]))
-
 
                 nprop_match = None
                 if word_sort in ['Eigenname','Vorname','Toponym', 'Nachname']:
@@ -1283,9 +1297,9 @@ class Worker(multiprocessing.Process):
 
                 if nprop_match:
                     # some proper name come without inflection tables. Use default entries.
-                    if not hypothesis and not word_infos.get('cases'):
-                        if nprop_match == 'Toponym':
-                            if config.debug_lvl > 0: print("no inflection found for toponym", word_infos['lemma'], ", assuming default.")
+                    if not hypothesis and (not word_infos.get('cases') or list(word_infos.get('cases').keys()) == ['Genus']):
+                        if nprop_match == 'Toponym' or nprop_match == 'Eigenname':
+                            if config.debug_lvl > 0: print("no inflection found for", nprop_match, word_infos['lemma'], ", assuming default.")
                             if word_infos.get('gender') == 'm':
                                 hypothesis = ['NMasc/Sg_s']
                             elif word_infos.get('gender') == 'n':
@@ -1327,6 +1341,16 @@ class Worker(multiprocessing.Process):
                     #duplicate removal
                     hypothesis = sorted(set(hypothesis))
 
+                # also some normal nouns make use of default inflection for names
+                if not hypothesis and word_infos.get('inflection_heading') == 'Deutsch Name Übersicht':
+                    if config.debug_lvl > 0: print("no inflection found for noun", word_infos['lemma'], ", assuming default.")
+                    if word_infos.get('gender') == 'm':
+                        hypothesis = ['NMasc/Sg_s']
+                    elif word_infos.get('gender') == 'n':
+                        hypothesis = ['NNeut/Sg_s']
+                    elif word_infos.get('gender') == 'f':
+                        hypothesis = ['NFem/Sg']
+
             elif word_infos['pos'] == 'V':
                 # NOTE: special case for Verbs. if there are only the analysis VVReg-el/er and VVReg, they can be desambiguiated by the ending
                 if len(hypothesis or []) == 2 and ("VVReg-el/er" in (hypothesis or [])) and ("VVReg" in (hypothesis or [])):
@@ -1361,7 +1385,7 @@ class Worker(multiprocessing.Process):
         for caseName, caseValue in list(word['cases'].items()):
 
             # Genus is part of inflection table, but no need to look up genus with SMOR
-            if caseName.startswith('Genus'):
+            if caseName.startswith('Genus') or caseName.startswith('Stamm'):
                 continue
             caseInflectClass = set()
             for casev in caseValue:
