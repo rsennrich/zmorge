@@ -89,7 +89,7 @@ def extractFromWikidump(wikidump_filepath):
     extractor_case_filter = re.compile(wik_regex.case_filter)
 
     # filters after base-extraction
-    filter_non_linguistic_case = re.compile("(?i)\s*(Bild|Weitere_|Hilfsverb|keine weiteren|Befehl_du|Passiv|unpersönlich)") # TODO: move to wik_regex
+    filter_non_linguistic_case = re.compile("(?i)\s*(Bild|Weitere|Hilfsverb|keine weiteren|Befehl_du|Passiv|unpersönlich|dataWTSonderfall|Kein-ens|Dialekttabelle|am)") # TODO: move to wik_regex
 
     # values that indicate no entry
     blacklist = set(["—", "–", "?", "-"])
